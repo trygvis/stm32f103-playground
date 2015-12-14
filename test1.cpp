@@ -47,14 +47,23 @@ void HardFault_Handler_C(uint32_t * hardfault_args) {
     } while (1);
 }
 
-/*
- * Each of the general-purpose I/O ports has two 32-bit configuration registers (GPIOx_CRL,
- * GPIOx_CRH), two 32-bit data registers (GPIOx_IDR, GPIOx_ODR), a 32-bit set/reset
- * register (GPIOx_BSRR), a 16-bit reset register (GPIOx_BRR) and a 32-bit locking register
- * (GPIOx_LCKR).
- */
+__attribute__((naked))
+void send_command(int command, void* message) {
+  __asm volatile (
+    "mov r0, %[cmd] \n\t"
+    "mov r1, %[msg] \n\t"
+    "bkpt #0xAB" : : [cmd] "r" (command), [msg] "r" (message) : "r0", "r1", "memory"
+  );
+}
 
 int main() {
+    uint32_t message[] = {
+        2,
+        (uint32_t)"Hello World!\r\n",
+        14
+    };
+    send_command(0x05, &message);
+
     SystemInit();
     SCB->SHCSR |= SCB_SHCSR_USGFAULTENA_Msk | SCB_SHCSR_MEMFAULTPENDED_Msk | SCB_SHCSR_BUSFAULTENA_Msk;
 
