@@ -1,12 +1,14 @@
-; https://github.com/dwelch67/stm32_samples
-; http://stackoverflow.com/questions/9565921/cortex-m3-initialisation
+/*
+https://github.com/dwelch67/stm32_samples
+http://stackoverflow.com/questions/9565921/cortex-m3-initialisation
+*/
 
 .syntax unified
 .cpu cortex-m3
 .thumb
 
-.section isr_vectors
-.thumb_func
+.section .isr_vectors
+
 .global vectors
 vectors:
 stacktop: .word 0x20001000
@@ -26,9 +28,8 @@ stacktop: .word 0x20001000
 .word hang2
 .word hang2
 
-.global fault_code
-fault_code:
-.word 0
+/* VERY significant */
+.section .text
 
 .thumb_func
 .global _Reset_Handler
@@ -42,7 +43,6 @@ hang2:
 
 .thumb_func
 NMI_Handler:
-    movs r0, #1
     b hang2
 
 .thumb_func
@@ -55,15 +55,14 @@ HardFault_Handler:
 
 .thumb_func
 MemManage_Handler:
-    movs r0, #3
     b hang2
 
 .thumb_func
 BusFault_Handler:
-    movs r0, #4
     b hang2
 
 .thumb_func
 UsageFault_Handler:
-    mov r0, #5
     b hang2
+
+.end

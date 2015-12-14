@@ -16,14 +16,14 @@ monitor stm32f1x.cpu mwb 0x20000000 0x5a 0x5000
 
 define flash_test1
 file build/test1.elf
-load build/test1.elf
+#load build/test1.elf
 monitor reset halt
 monitor flash probe 0
 monitor stm32f1x mass_erase 0
-monitor flash write_bank 0 test1.elf.bin 0
 monitor stm32f1x.cpu mwb 0x20000000 0x5a 20480
+monitor flash write_bank 0 test1.elf.bin
+delete breakpoint
+hbreak main
 end
 
 monitor reset halt
-#hbreak main
-jump main

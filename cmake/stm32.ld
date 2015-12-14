@@ -24,13 +24,14 @@ SECTIONS
 {
     .text :
     {
-        KEEP(*(isr_vectors))
-        *(.text.main)
+        *(.isr_vectors)
+        init.s:(.text)
+        *(.text)
         KEEP(*(.text.*))
-        /*
-        *(.text.*)
-        KEEP(*(.text.high))
-        KEEP(*(.text.low))
-        /**/
     } >FLASH
+
+    .data :
+    {
+        *(.data*)
+    } >RAM
 }

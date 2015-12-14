@@ -18,6 +18,7 @@ extern "C" void high();
 extern "C" void low();
 
 SCB_Type *__SCB = ((SCB_Type *) SCB_BASE);
+//extern SCB_Type *__SCB;
 
 struct hardfault_data_t {
     uint32_t r0;
@@ -54,10 +55,11 @@ void HardFault_Handler_C(uint32_t * hardfault_args) {
  */
 
 int main() {
-//    SystemInit();
+    SystemInit();
+    SCB->SHCSR |= SCB_SHCSR_USGFAULTENA_Msk | SCB_SHCSR_MEMFAULTPENDED_Msk | SCB_SHCSR_BUSFAULTENA_Msk;
 
-//    RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
-//    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC | RCC_APB2Periph_GPIOA, ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC | RCC_APB2Periph_GPIOA, ENABLE);
 
 //    GPIO_InitTypeDef init;
 //    GPIO_StructInit(&init);
