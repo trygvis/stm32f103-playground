@@ -1,28 +1,19 @@
 target remote tcp:localhost:3333
-file build/test1.elf
-load build/test1.elf
-
-# Write 0x5000 (20k) with the pattern 0x5a
-monitor stm32f1x.cpu mwb 0x20000000 0x5a 0x5000
-
-#monitor stm32f1x.cpu mww 0x40010c00 0x55555555 1
-#monitor stm32f1x.cpu mww 0x40010c04 0x55555555 1
-# BSRR
-#monitor stm32f1x.cpu mww 0x40010c10 0xffff0000 1
-#monitor stm32f1x.cpu mww 0x40010c10 0x0000ffff 1
-
-# ODR
-# monitor stm32f1x.cpu mww 0x40010c0c 0x0000ffff 1
 
 define flash_test1
-file build/test1.elf
-#load build/test1.elf
-monitor reset halt
-monitor flash probe 0
-monitor stm32f1x mass_erase 0
-monitor stm32f1x.cpu mwb 0x20000000 0x5a 20480
-monitor flash write_bank 0 test1.elf.bin 0
 monitor arm semihosting enable
+monitor reset halt
+
+monitor stm32f1x.cpu mwb 0x20000000 0x5a 20480
+
+set confirm off
+file build/test1.elf
+load build/test1.elf
+set confirm on
+
+#monitor flash probe 0
+#monitor stm32f1x mass_erase 0
+#monitor flash write_bank 0 test1.elf.bin 0
 # delete breakpoint
 # hbreak main
 end
