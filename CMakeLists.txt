@@ -6,7 +6,7 @@ project(teensy-playground C CXX ASM)
 
 #include(cmake/Teensy.cmake)
 
-add_executable(test1.elf test1.cpp init.s include/stm32f10x_conf.h
+add_executable(test1.elf test1.cpp init_low.s init_high.cpp include/stm32f10x_conf.h
         # http://www.sparetimelabs.com/tinyprintf/tinyprintf.php
         tmp/printf/printf.h tmp/printf/printf.c
         tmp/STM32F10x_StdPeriph_Lib_V3.5.0/Libraries/CMSIS/CM3/CoreSupport/core_cm3.c

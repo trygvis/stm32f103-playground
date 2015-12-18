@@ -18,15 +18,15 @@ stacktop: .word 0x20001000
 .word MemManage_Handler
 .word BusFault_Handler
 .word UsageFault_Handler
-.word hang2
-.word hang2
-.word hang2
-.word hang2
-.word hang2
-.word hang2
-.word hang2
-.word hang2
-.word hang2
+.word halt
+.word halt
+.word halt
+.word halt
+.word halt
+.word halt
+.word halt
+.word halt
+.word halt
 
 /* VERY significant */
 .section .text
@@ -34,16 +34,17 @@ stacktop: .word 0x20001000
 .thumb_func
 .global _Reset_Handler
 _Reset_Handler:
-    bl main
-    b hang2
+    bl init_high
+    b halt
 
 .thumb_func
-hang2:
+.global halt
+halt:
     b .
 
 .thumb_func
 NMI_Handler:
-    b hang2
+    b halt
 
 .thumb_func
 HardFault_Handler:
@@ -55,14 +56,14 @@ HardFault_Handler:
 
 .thumb_func
 MemManage_Handler:
-    b hang2
+    b halt
 
 .thumb_func
 BusFault_Handler:
-    b hang2
+    b halt
 
 .thumb_func
 UsageFault_Handler:
-    b hang2
+    b halt
 
 .end
