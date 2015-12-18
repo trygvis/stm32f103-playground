@@ -3,6 +3,7 @@
 #include <stm32f10x.h>
 #include <stm32f10x_rcc.h>
 #include <stm32f10x_gpio.h>
+#include <stddef.h>
 
 #include "tmp/printf/printf.h"
 
@@ -50,6 +51,12 @@ void HardFault_Handler_C(uint32_t *hardfault_args) {
 }
 
 void send_command(int command, void *message) {
+    bool active = (CoreDebug->DHCSR & CoreDebug_DHCSR_C_DEBUGEN_Msk) == CoreDebug_DHCSR_C_DEBUGEN_Msk;
+
+    if (!active) {
+        return;
+    }
+
     __asm volatile (
     "mov r0, %[cmd];"
         "mov r1, %[msg];"
@@ -58,16 +65,50 @@ void send_command(int command, void *message) {
 }
 
 //static
-const char *msg_a = "ABCDEFGHIJKLMNOPQRSTUVWXYZ\r\n";
-
-//uint32_t message3[] = {
-//    2,
-//    (uint32_t) "YOYO\r\n",
-//    6
-//};
+const char *alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ\r\n";
 
 extern uint32_t _copy_data_load, _copy_data_store, _copy_data_store_end;
 extern uint32_t _bss_start, _bss_end;
+
+size_t strlen(const char *s) {
+    size_t size = 0;
+    while (*s++ != '\0') size++;
+    return size;
+}
+
+void test_command() {
+    char msg[100];
+
+    tfp_sprintf(msg, "Hello World: c=%c\r\n", 'c');
+    size_t len = strlen(msg);
+
+    uint32_t message[] = {
+        2,
+        (uint32_t) msg,
+        len
+    };
+    send_command(0x05, &message);
+
+    tfp_sprintf(msg, "Hello %s\r\n", "World!");
+    len = strlen(msg);
+
+    uint32_t message3[] = {
+        2,
+        (uint32_t) msg,
+        len
+    };
+
+    uint32_t message2[] = {
+        2,
+        (uint32_t) alphabet,
+        28
+    };
+    send_command(0x05, &message2);
+
+    send_command(0x05, &message3);
+
+    send_command(0x05, &message2);
+}
 
 /*
  * When we get there the stack pointer is set
@@ -89,21 +130,7 @@ int main() {
         *dest++ = 0;
     }
 
-    uint32_t message[] = {
-        2,
-        (uint32_t) "Hello World! again\r\n",
-        20
-    };
-    send_command(0x05, &message);
-
-    uint32_t message2[] = {
-        2,
-        (uint32_t) msg_a,
-        28
-    };
-    send_command(0x05, &message2);
-
-    send_command(0x05, &message);
+    test_command();
 
     SystemInit();
     SystemCoreClockUpdate();
