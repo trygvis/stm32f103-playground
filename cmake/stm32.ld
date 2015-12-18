@@ -13,12 +13,7 @@ MEMORY
   MEMORY_B1 (rx)  : ORIGIN = 0x60000000, LENGTH = 0K
 }
 
-_data_start = ORIGIN(RAM);
-_data_end = ORIGIN(RAM) + LENGTH(RAM);
 _estack = ORIGIN(RAM) + LENGTH(RAM);
-
-_Min_Heap_Size = 0;      /* required amount of heap  */
-_Min_Stack_Size = 0x100; /* required amount of stack */
 
 SECTIONS
 {
@@ -28,10 +23,26 @@ SECTIONS
         init.s:(.text)
         *(.text)
         KEEP(*(.text.*))
+        *(.rodata*)
     } >FLASH
 
-    .data :
+     . = ORIGIN(RAM);
+
+    .data ALIGN(4) :
     {
         *(.data*)
+    } >RAM AT >FLASH
+
+    .bss ALIGN(4) (NOLOAD) :
+    {
+        *(.bss)
+        *(.bss.*)
     } >RAM
+
+    _copy_data_store = ADDR(.data);
+    _copy_data_store_end = _copy_data_store + SIZEOF(.data);
+    _copy_data_load = LOADADDR(.data);
+
+    _bss_start = ADDR(.bss);
+    _bss_end = _bss_start + SIZEOF(.bss);
 }

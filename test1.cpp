@@ -4,6 +4,8 @@
 #include <stm32f10x_rcc.h>
 #include <stm32f10x_gpio.h>
 
+#include "tmp/printf/printf.h"
+
 #include "stm32f10x_conf.h"
 
 extern "C"
@@ -55,12 +57,52 @@ void send_command(int command, void *message) {
     );
 }
 
+//static
+const char *msg_a = "ABCDEFGHIJKLMNOPQRSTUVWXYZ\r\n";
+
+//uint32_t message3[] = {
+//    2,
+//    (uint32_t) "YOYO\r\n",
+//    6
+//};
+
+extern uint32_t _copy_data_load, _copy_data_store, _copy_data_store_end;
+extern uint32_t _bss_start, _bss_end;
+
+/*
+ * When we get there the stack pointer is set
+ */
 int main() {
+    // Copy data from flash to ram
+    uint32_t *src = &_copy_data_load;
+    uint32_t *dest = &_copy_data_store;
+    uint32_t *end = &_copy_data_store_end;
+
+    while (dest <= end) {
+        *dest++ = *src++;
+    }
+
+    // Clear the BSS segment
+    dest = &_bss_start;
+    end = &_bss_end;
+    while (dest <= end) {
+        *dest++ = 0;
+    }
+
     uint32_t message[] = {
         2,
         (uint32_t) "Hello World! again\r\n",
         20
     };
+    send_command(0x05, &message);
+
+    uint32_t message2[] = {
+        2,
+        (uint32_t) msg_a,
+        28
+    };
+    send_command(0x05, &message2);
+
     send_command(0x05, &message);
 
     SystemInit();
@@ -98,81 +140,5 @@ int main() {
         }
     }
 
-    if (0) {
-        GPIOA->CRL &= ~(GPIO_CRL_MODE0 | GPIO_CRL_CNF0);
-        GPIOA->CRL |= GPIO_CRL_MODE0;
-
-        GPIOB->CRL &= ~(GPIO_CRL_MODE5 | GPIO_CRL_CNF5);
-        GPIOB->CRL |= GPIO_CRL_MODE5;
-
-        while (1) {
-            GPIOB->BSRR = -1;
-            GPIOB->BSRR = -1;
-
-            send_command(0x05, &message);
-
-            GPIOA->BRR = -1;
-            GPIOA->BRR = -1;
-
-            send_command(0x05, &message);
-        }
-    }
-
-    if (0) {
-        do {
-            volatile uint32_t *port_b = (uint32_t *) (0x40010c00);
-            volatile uint32_t *port_b_crl = (uint32_t *) (port_b + 0x00);
-            volatile uint32_t *port_b_crh = (uint32_t *) (port_b + 0x04);
-//        volatile uint32_t *port_b_idr = (uint32_t *) (port_b + 0x08);
-//        volatile uint32_t *port_b_odr = (uint32_t *) (port_b + 0x0c);
-            volatile uint32_t *port_b_bsrr = (uint32_t *) (port_b + 0x10);
-//        volatile uint32_t *port_b_brr = (uint32_t *) (port_b + 0x14);
-
-            // mode=output, max speed 10MHz
-            *port_b_crl = 0x11111111;
-            *port_b_crh = 0x11111111;
-
-            *port_b_bsrr = 0xffff0000;
-
-            *port_b_bsrr = 0x0000ffff;
-        } while (1);
-    }
-
     return 0;
 }
-
-extern "C" void high() {
-
-    do {
-        volatile uint32_t *port_b = (uint32_t *) (0x40010c00);
-        volatile uint32_t *port_b_crl = (uint32_t *) (port_b + 0x00);
-        volatile uint32_t *port_b_crh = (uint32_t *) (port_b + 0x04);
-        volatile uint32_t *port_b_bsrr = (uint32_t *) (port_b + 0x10);
-
-        *port_b_crl = 0x11111111;
-        *port_b_crh = 0x11111111;
-        *port_b_bsrr = 0xffff0000;
-
-        *port_b_bsrr = 0x0000ffff;
-    } while (1);
-}
-
-extern "C" void low() {
-
-    do {
-        volatile uint32_t *port_b = (uint32_t *) (0x40010c00);
-        volatile uint32_t *port_b_crl = (uint32_t *) (port_b + 0x00);
-        volatile uint32_t *port_b_crh = (uint32_t *) (port_b + 0x04);
-        volatile uint32_t *port_b_bsrr = (uint32_t *) (port_b + 0x10);
-
-        *port_b_crl = 0x11111111;
-        *port_b_crh = 0x11111111;
-        *port_b_bsrr = 0xffff0000;
-
-        *port_b_bsrr = 0xffff0000;
-    } while (1);
-}
-
-//extern "C" void _Reset_Handler() {
-//
-//}

@@ -4,18 +4,12 @@ define flash_test1
 monitor arm semihosting enable
 monitor reset halt
 
-monitor stm32f1x.cpu mwb 0x20000000 0x5a 20480
-
 set confirm off
 file build/test1.elf
 load build/test1.elf
 set confirm on
 
-#monitor flash probe 0
-#monitor stm32f1x mass_erase 0
-#monitor flash write_bank 0 test1.elf.bin 0
-# delete breakpoint
-# hbreak main
+monitor stm32f1x.cpu mwb 0x20000000 0x5a 20480
 end
 
 monitor reset halt
