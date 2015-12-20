@@ -1,15 +1,34 @@
 target remote tcp:localhost:3333
 
 define flash_test1
-monitor arm semihosting enable
-monitor reset halt
+    shell cd build && make test1.elf
 
-set confirm off
-file build/test1.elf
-load build/test1.elf
-set confirm on
+    monitor arm semihosting enable
+    monitor reset halt
 
-monitor stm32f1x.cpu mwb 0x20000000 0x5a 20480
+    set confirm off
+    file build/test1.elf
+    load build/test1.elf
+    set confirm on
+
+    monitor stm32f1x.cpu mwb 0x20000000 0x5a 20480
+    hbreak halt
+end
+
+define flash_serial1
+    shell cd build && make serial1.elf
+
+    monitor arm semihosting enable
+    monitor reset halt
+
+    set confirm off
+    file build/serial1.elf
+    load build/serial1.elf
+    set confirm on
+
+    monitor stm32f1x.cpu mwb 0x20000000 0x5a 20480
+    delete breakpoint 1
+    hbreak halt
 end
 
 monitor reset halt
