@@ -26,7 +26,7 @@ target_include_directories(tinyprintf PUBLIC tinyprintf)
 #########################################################################################################
 # test1
 
-add_executable(test1.elf test1.cpp init_low.s init_high.cpp include/stm32f10x_conf.h
+add_executable(test1.elf test1.cpp init_low.s init_high.cpp init_high.h include/stm32f10x_conf.h
         # http://www.sparetimelabs.com/tinyprintf/tinyprintf.php
         tinyprintf/tinyprintf.c tinyprintf/tinyprintf.h
         tmp/STM32F10x_StdPeriph_Lib_V3.5.0/Libraries/CMSIS/CM3/CoreSupport/core_cm3.c
@@ -50,7 +50,7 @@ add_extra_commands(test1.elf)
 #########################################################################################################
 # serial1
 
-add_executable(serial1.elf serial1.cpp init_low.s init_high.cpp include/stm32f10x_conf.h
+add_executable(serial1.elf serial1.cpp init_low.s init_high.cpp init_high.h include/stm32f10x_conf.h
         debug.cpp debug.h
         # http://www.sparetimelabs.com/tinyprintf/tinyprintf.php
         tinyprintf/tinyprintf.c tinyprintf/tinyprintf.h
@@ -74,7 +74,7 @@ add_extra_commands(serial1.elf)
 #########################################################################################################
 # serial2
 
-add_executable(serial2.elf serial2.cpp init_low.s init_high.cpp include/stm32f10x_conf.h
+add_executable(serial2.elf serial2.cpp init_low.s init_high.cpp init_high.h include/stm32f10x_conf.h
         debug.cpp debug.h
         tmp/STM32F10x_StdPeriph_Lib_V3.5.0/Libraries/CMSIS/CM3/CoreSupport/core_cm3.c
         tmp/STM32F10x_StdPeriph_Lib_V3.5.0/Libraries/CMSIS/CM3/DeviceSupport/ST/STM32F10x/system_stm32f10x.c

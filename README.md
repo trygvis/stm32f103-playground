@@ -8,6 +8,8 @@
 * http://www.st.com/web/en/resource/technical/document/datasheet/CD00161566.pdf
 * http://www.banggood.com/ARM-Cortex-M3-STM32F103C8T6-STM32-Minimum-System-Development-Board-p-920184.html
 * http://www.lctech-inc.com/Hardware/Detail.aspx?id=0172e854-77b0-43d5-b300-68e570c914fd
+* https://github.com/dwelch67/stm32_samples
+* http://stackoverflow.com/questions/9565921/cortex-m3-initialisation
 
 * http://stackoverflow.com/questions/32422075/arm-bare-metal-binary-linking
 * https://github.com/ckormanyos/real-time-cpp/blob/master/ref_app/target/micros/stm32f100/make/stm32f100.ld

@@ -1,11 +1,5 @@
-/*
- * https://github.com/barrybingo/SunMoonSim/blob/master/LinkerScript/STM32F103-MD.ld
- */
-
-/* Entry Point */
 ENTRY(_Reset_Handler)
 
-/* Specify the memory areas */
 MEMORY
 {
   FLASH (rx)      : ORIGIN = 0x08000000, LENGTH = 64K
@@ -17,10 +11,19 @@ _estack = ORIGIN(RAM) + LENGTH(RAM);
 
 SECTIONS
 {
+    /* Put the ISR section at the start of the flash area */
+    .isr :
+    {
+        /* The first word has to be the initial stack pointer */
+        LONG(__initial_stack_pointer);
+        */init_high.cpp.obj(.isr_vectors)
+    } >FLASH
+    ASSERT(SIZEOF(.isr) > 100, "The isr_vectors section is too small")
+    ASSERT(SIZEOF(.isr) < 1000, "The isr_vectors section is too big")
+    ASSERT(ADDR(.isr) == ORIGIN(FLASH), "The isr_vectors section was not placed at the start of the flash area")
+
     .text :
     {
-        *(.isr_vectors)
-        init.s:(.text)
         *(.text)
         KEEP(*(.text.*))
         *(.rodata*)
@@ -45,4 +48,6 @@ SECTIONS
 
     _bss_start = ADDR(.bss);
     _bss_end = _bss_start + SIZEOF(.bss);
+
+    __initial_stack_pointer = ORIGIN(RAM) + LENGTH(RAM) - 1;
 }
