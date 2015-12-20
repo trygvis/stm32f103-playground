@@ -27,7 +27,21 @@ define flash_serial1
     set confirm on
 
     monitor stm32f1x.cpu mwb 0x20000000 0x5a 20480
-    delete breakpoint 1
+    hbreak halt
+end
+
+define flash_serial2
+    shell cd build && make serial2.elf
+
+    monitor arm semihosting enable
+    monitor reset halt
+
+    set confirm off
+    file build/serial2.elf
+    load build/serial2.elf
+    set confirm on
+
+    monitor stm32f1x.cpu mwb 0x20000000 0x5a 20480
     hbreak halt
 end
 

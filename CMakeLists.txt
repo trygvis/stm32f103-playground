@@ -6,17 +6,17 @@ project(stm32f103-playground C CXX ASM)
 
 function(add_extra_commands target_name)
     add_custom_command(TARGET ${target_name} POST_BUILD
-            COMMAND arm-none-eabi-objdump -D ${target_name} > ${target_name}.asm)
+            COMMAND mkdir -p ${target_name}-info && arm-none-eabi-objdump -D ${target_name} > ${target_name}-info/${target_name}.asm)
     add_custom_command(TARGET ${target_name} POST_BUILD
-            COMMAND arm-none-eabi-nm ${target_name} > ${target_name}.nm)
+            COMMAND mkdir -p ${target_name}-info && arm-none-eabi-nm ${target_name} > ${target_name}-info/${target_name}.nm)
     add_custom_command(TARGET ${target_name} POST_BUILD
-            COMMAND arm-none-eabi-size ${target_name} > ${target_name}.size)
+            COMMAND mkdir -p ${target_name}-info && arm-none-eabi-size ${target_name} > ${target_name}-info/${target_name}.size)
     add_custom_command(TARGET ${target_name} POST_BUILD
-            COMMAND arm-none-eabi-readelf -a ${target_name} > ${target_name}.readelf)
+            COMMAND mkdir -p ${target_name}-info && arm-none-eabi-readelf -a ${target_name} > ${target_name}-info/${target_name}.readelf)
     add_custom_command(TARGET ${target_name} POST_BUILD
-            COMMAND arm-none-eabi-objcopy -O ihex ${target_name} ${target_name}.hex)
+            COMMAND mkdir -p ${target_name}-info && arm-none-eabi-objcopy -O ihex ${target_name} ${target_name}-info/${target_name}.hex)
     add_custom_command(TARGET ${target_name} POST_BUILD
-            COMMAND arm-none-eabi-objcopy -O binary ${target_name} ${target_name}.bin)
+            COMMAND mkdir -p ${target_name}-info && arm-none-eabi-objcopy -O binary ${target_name} ${target_name}-info/${target_name}.bin)
 endfunction()
 
 # https://github.com/cjlano/tinyprintf
@@ -78,7 +78,9 @@ add_executable(serial2.elf serial2.cpp init_low.s init_high.cpp include/stm32f10
         debug.cpp debug.h
         tmp/STM32F10x_StdPeriph_Lib_V3.5.0/Libraries/CMSIS/CM3/CoreSupport/core_cm3.c
         tmp/STM32F10x_StdPeriph_Lib_V3.5.0/Libraries/CMSIS/CM3/DeviceSupport/ST/STM32F10x/system_stm32f10x.c
+        tmp/STM32F10x_StdPeriph_Lib_V3.5.0/Libraries/STM32F10x_StdPeriph_Driver/src/misc.c
         tmp/STM32F10x_StdPeriph_Lib_V3.5.0/Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_rcc.c
+        tmp/STM32F10x_StdPeriph_Lib_V3.5.0/Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_usart.c
         tmp/STM32F10x_StdPeriph_Lib_V3.5.0/Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_gpio.c
         )
 target_link_libraries(serial2.elf tinyprintf)
