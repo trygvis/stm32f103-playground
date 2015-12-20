@@ -1,5 +1,5 @@
 #include "debug.h"
-#include "printf.h"
+#include "tinyprintf.h"
 
 #ifdef __cplusplus
 extern "C" {

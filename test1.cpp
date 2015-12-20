@@ -9,8 +9,6 @@ int init_high();
 
 extern "C" void halt();
 
-#include "tmp/printf/printf.h"
-
 #include "stm32f10x_conf.h"
 
 extern "C"

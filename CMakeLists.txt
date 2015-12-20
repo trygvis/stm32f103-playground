@@ -19,12 +19,16 @@ function(add_extra_commands target_name)
             COMMAND arm-none-eabi-objcopy -O binary ${target_name} ${target_name}.bin)
 endfunction()
 
+# https://github.com/cjlano/tinyprintf
+add_library(tinyprintf STATIC tinyprintf/tinyprintf.c tinyprintf/tinyprintf.h)
+target_include_directories(tinyprintf PUBLIC tinyprintf)
+
 #########################################################################################################
 # test1
 
 add_executable(test1.elf test1.cpp init_low.s init_high.cpp include/stm32f10x_conf.h
         # http://www.sparetimelabs.com/tinyprintf/tinyprintf.php
-        tmp/printf/printf.h tmp/printf/printf.c
+        tinyprintf/tinyprintf.c tinyprintf/tinyprintf.h
         tmp/STM32F10x_StdPeriph_Lib_V3.5.0/Libraries/CMSIS/CM3/CoreSupport/core_cm3.c
         tmp/STM32F10x_StdPeriph_Lib_V3.5.0/Libraries/CMSIS/CM3/DeviceSupport/ST/STM32F10x/system_stm32f10x.c
         tmp/STM32F10x_StdPeriph_Lib_V3.5.0/Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_rcc.c
@@ -33,6 +37,7 @@ add_executable(test1.elf test1.cpp init_low.s init_high.cpp include/stm32f10x_co
 
 target_include_directories(test1.elf PUBLIC
         include
+        tinyprintf
         tmp/STM32F10x_StdPeriph_Lib_V3.5.0/Libraries/CMSIS/CM3/CoreSupport
         tmp/STM32F10x_StdPeriph_Lib_V3.5.0/Libraries/CMSIS/CM3/DeviceSupport/ST/STM32F10x
         tmp/STM32F10x_StdPeriph_Lib_V3.5.0/Libraries/STM32F10x_StdPeriph_Driver/inc)
@@ -48,7 +53,7 @@ add_extra_commands(test1.elf)
 add_executable(serial1.elf serial1.cpp init_low.s init_high.cpp include/stm32f10x_conf.h
         debug.cpp debug.h
         # http://www.sparetimelabs.com/tinyprintf/tinyprintf.php
-        tmp/printf/printf.h tmp/printf/printf.c
+        tinyprintf/tinyprintf.c tinyprintf/tinyprintf.h
         tmp/STM32F10x_StdPeriph_Lib_V3.5.0/Libraries/CMSIS/CM3/CoreSupport/core_cm3.c
         tmp/STM32F10x_StdPeriph_Lib_V3.5.0/Libraries/CMSIS/CM3/DeviceSupport/ST/STM32F10x/system_stm32f10x.c
         tmp/STM32F10x_StdPeriph_Lib_V3.5.0/Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_rcc.c
@@ -57,7 +62,7 @@ add_executable(serial1.elf serial1.cpp init_low.s init_high.cpp include/stm32f10
 
 target_include_directories(serial1.elf PUBLIC
         include
-        tmp/printf
+        tinyprintf
         tmp/STM32F10x_StdPeriph_Lib_V3.5.0/Libraries/CMSIS/CM3/CoreSupport
         tmp/STM32F10x_StdPeriph_Lib_V3.5.0/Libraries/CMSIS/CM3/DeviceSupport/ST/STM32F10x
         tmp/STM32F10x_StdPeriph_Lib_V3.5.0/Libraries/STM32F10x_StdPeriph_Driver/inc)
@@ -65,3 +70,25 @@ target_compile_definitions(serial1.elf PUBLIC STM32F10X_MD USE_STDPERIPH_DRIVER)
 
 set_target_properties(serial1.elf PROPERTIES LINK_FLAGS "-nostartfiles -T${CMAKE_SOURCE_DIR}/cmake/stm32.ld")
 add_extra_commands(serial1.elf)
+
+#########################################################################################################
+# serial2
+
+add_executable(serial2.elf serial2.cpp init_low.s init_high.cpp include/stm32f10x_conf.h
+        debug.cpp debug.h
+        tmp/STM32F10x_StdPeriph_Lib_V3.5.0/Libraries/CMSIS/CM3/CoreSupport/core_cm3.c
+        tmp/STM32F10x_StdPeriph_Lib_V3.5.0/Libraries/CMSIS/CM3/DeviceSupport/ST/STM32F10x/system_stm32f10x.c
+        tmp/STM32F10x_StdPeriph_Lib_V3.5.0/Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_rcc.c
+        tmp/STM32F10x_StdPeriph_Lib_V3.5.0/Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_gpio.c
+        )
+target_link_libraries(serial2.elf tinyprintf)
+
+target_include_directories(serial2.elf PUBLIC
+        include
+        tmp/STM32F10x_StdPeriph_Lib_V3.5.0/Libraries/CMSIS/CM3/CoreSupport
+        tmp/STM32F10x_StdPeriph_Lib_V3.5.0/Libraries/CMSIS/CM3/DeviceSupport/ST/STM32F10x
+        tmp/STM32F10x_StdPeriph_Lib_V3.5.0/Libraries/STM32F10x_StdPeriph_Driver/inc)
+target_compile_definitions(serial2.elf PUBLIC STM32F10X_MD USE_STDPERIPH_DRIVER)
+
+set_target_properties(serial2.elf PROPERTIES LINK_FLAGS "-nostartfiles -T${CMAKE_SOURCE_DIR}/cmake/stm32.ld")
+add_extra_commands(serial2.elf)
