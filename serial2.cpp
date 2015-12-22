@@ -91,10 +91,10 @@ int main() {
 
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);
     NVIC_InitTypeDef NVIC_InitStruct = {
-        /*.NVIC_IRQChannel =*/ USART1_IRQn,
-        /*.NVIC_IRQChannelPreemptionPriority =*/ 0,
-        /*.NVIC_IRQChannel =*/ 0,
-        /*.NVIC_IRQChannelCmd =*/ ENABLE,
+        NVIC_IRQChannel: USART1_IRQn,
+        NVIC_IRQChannelPreemptionPriority: 0,
+        NVIC_IRQChannelSubPriority: 0,
+        NVIC_IRQChannelCmd: ENABLE,
     };
     NVIC_Init(&NVIC_InitStruct);
     NVIC_EnableIRQ(USART1_IRQn);
