@@ -8,8 +8,6 @@
 #include "tinyprintf.h"
 #include "debug.h"
 
-int init_high();
-
 extern "C" void halt();
 
 #include "stm32f10x_conf.h"

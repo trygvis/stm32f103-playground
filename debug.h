@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+__attribute__((format (printf, 1, 2)))
 void dbg_printf(const char *fmt, ...);
 
 void dbg_putc(void * junk, char);

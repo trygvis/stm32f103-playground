@@ -2,7 +2,6 @@
 .cpu cortex-m3
 .thumb
 
-/* VERY significant */
 .section .text
 
 .thumb_func
@@ -41,4 +40,3 @@ UsageFault_Handler:
     b halt
 
 .end
-

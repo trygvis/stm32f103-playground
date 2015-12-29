@@ -7,22 +7,19 @@
 
 #include "debug.h"
 #include "tinyprintf.h"
-
-int init_high();
-
-extern "C" void halt();
+#include "playground.h"
 
 extern "C"
-__attribute__((naked))
+__attribute__((naked, used))
 void HardFault_Handler_C(uint32_t *hardfault_args) {
-    dbg_printf("r0 = 0x%08x (%d)\n", hardfault_args[0], hardfault_args[0]);
-    dbg_printf("r1 = 0x%08x (%d)\n", hardfault_args[1], hardfault_args[1]);
-    dbg_printf("r2 = 0x%08x (%d)\n", hardfault_args[2], hardfault_args[2]);
-    dbg_printf("r3 = 0x%08x (%d)\n", hardfault_args[3], hardfault_args[3]);
-    dbg_printf("r12 = 0x%08x (%d)\n", hardfault_args[4], hardfault_args[4]);
-    dbg_printf("lr = 0x%08x (%d)\n", hardfault_args[5], hardfault_args[5]);
-    dbg_printf("pc = 0x%08x (%d)\n", hardfault_args[6], hardfault_args[6]);
-    dbg_printf("psr = 0x%08x (%d)\n", hardfault_args[7], hardfault_args[7]);
+    dbg_printf("r0 = 0x%08lx (%lu)\n", hardfault_args[0], hardfault_args[0]);
+    dbg_printf("r1 = 0x%08lx (%lu)\n", hardfault_args[1], hardfault_args[1]);
+    dbg_printf("r2 = 0x%08lx (%lu)\n", hardfault_args[2], hardfault_args[2]);
+    dbg_printf("r3 = 0x%08lx (%lu)\n", hardfault_args[3], hardfault_args[3]);
+    dbg_printf("r12 = 0x%08lx (%lu)\n", hardfault_args[4], hardfault_args[4]);
+    dbg_printf("lr = 0x%08lx (%lu)\n", hardfault_args[5], hardfault_args[5]);
+    dbg_printf("pc = 0x%08lx (%lu)\n", hardfault_args[6], hardfault_args[6]);
+    dbg_printf("psr = 0x%08lx (%lu)\n", hardfault_args[7], hardfault_args[7]);
     dbg_printf("\n");
 
     halt();

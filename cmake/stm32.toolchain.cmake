@@ -25,7 +25,7 @@ set(TARGET_FLAGS "-mcpu=cortex-m3 -mthumb")
 set(BASE_FLAGS "-Wall -g -ffunction-sections -fdata-sections ${TARGET_FLAGS}")
 
 set(CMAKE_C_FLAGS "${BASE_FLAGS}" CACHE STRING "c flags") # XXX Generate TIME_T dynamically.
-set(CMAKE_CXX_FLAGS "${BASE_FLAGS} -fno-exceptions -fno-rtti -felide-constructors -std=gnu++0x" CACHE STRING "c++ flags")
+set(CMAKE_CXX_FLAGS "${BASE_FLAGS} -fno-exceptions -fno-rtti -felide-constructors -std=c++14" CACHE STRING "c++ flags")
 
 #set(LINKER_FLAGS "-Os -Wl,--gc-sections ${TARGET_FLAGS} -T${TEENSY_ROOT}/mk20dx256.ld")
 #set(LINKER_FLAGS "-Os -Wl,--gc-sections ${TARGET_FLAGS}")

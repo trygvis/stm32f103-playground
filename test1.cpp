@@ -4,12 +4,7 @@
 #include <stm32f10x_rcc.h>
 #include <stm32f10x_gpio.h>
 #include <stddef.h>
-
-int init_high();
-
-extern "C" void halt();
-
-#include "stm32f10x_conf.h"
+#include "playground.h"
 
 extern "C"
 __attribute__((naked))
