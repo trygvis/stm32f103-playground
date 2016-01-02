@@ -1,12 +1,11 @@
-#include "tinyprintf.h"
 #include <stdint.h>
 #include <stm32f10x.h>
 #include <stm32f10x_rcc.h>
 #include <stm32f10x_gpio.h>
 #include <stddef.h>
 #include <stdarg.h>
-#include "tinyprintf.h"
 #include "debug.h"
+#include "tinyprintf.h"
 
 extern "C" void halt();
 

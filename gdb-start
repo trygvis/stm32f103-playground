@@ -1,4 +1,5 @@
 target remote tcp:localhost:3333
+monitor reset halt
 
 define flash_test1
     shell cd build && make test1.elf
@@ -62,4 +63,36 @@ define flash_os1
     echo Run this if first run:\n  hbreak halt\n  hbreak job1\n  hbreak PendSV_Handler\n
 end
 
-monitor reset halt
+define flash_os2
+    shell cd build && make os2.elf
+
+    monitor arm semihosting enable
+    monitor reset halt
+
+    set confirm off
+    file build/os2.elf
+    load build/os2.elf
+    set confirm on
+
+    set $r0=0, $r1=-1, $r2=-2, $r3=-3, $r4=-4, $r5=-5, $r6=-6, $r7=-7, $r8=-8, $r9=-9, $r10=-10, $r11=-11, $r12=-12
+    monitor stm32f1x.cpu mwb 0x20000000 0x5a 20480
+
+    echo Run this if first run:\n  hbreak halt\n  hbreak job1\n  hbreak PendSV_Handler\n
+end
+
+define flash_dma1
+    shell cd build && make dma1.elf
+
+    monitor arm semihosting enable
+    monitor reset halt
+
+    set confirm off
+    file build/apps/dma1/dma1.elf
+    load build/apps/dma1/dma1.elf
+    set confirm on
+
+    set $r0=0, $r1=-1, $r2=-2, $r3=-3, $r4=-4, $r5=-5, $r6=-6, $r7=-7, $r8=-8, $r9=-9, $r10=-10, $r11=-11, $r12=-12
+    monitor stm32f1x.cpu mwb 0x20000000 0x5a 20480
+
+    echo Run this if first run:\n  hbreak halt\n
+end

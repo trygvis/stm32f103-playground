@@ -7,6 +7,10 @@
 #include "tinyprintf.h"
 #include "playground.h"
 
+namespace trygvis {
+namespace os2 {
+
+namespace os {
 extern "C"
 __attribute__((naked, used))
 void HardFault_Handler_C(uint32_t *hardfault_args) {
@@ -235,10 +239,57 @@ void os_start() {
     }
 }
 
+class CriticalSection {
+public:
+    CriticalSection() : primask(__get_PRIMASK()) {
+        __disable_irq();
+    }
+
+    ~CriticalSection() {
+        __set_PRIMASK(primask);
+    }
+
+private:
+    uint32_t primask;
+};
+
+//class Mutex {
+//public:
+//    Mutex() : task(-1) {
+//    }
+//
+//    void lock() {
+//        do {
+//            {
+//                CriticalSection cs;
+//                if (task == -1) {
+//                    task = current_task;
+//                    break;
+//                }
+//            }
+//
+//        } while (true);
+//    }
+//
+//private:
+//    int task;
+//};
+
+} // namespace os
+
+namespace main {
+
+using namespace trygvis::os2::os;
 
 volatile bool run1 = true;
 
 void job1(void const *const) {
+    GPIO_InitTypeDef init;
+    GPIO_StructInit(&init);
+    init.GPIO_Mode = GPIO_Mode_Out_PP;
+    init.GPIO_Pin = GPIO_Pin_8;
+    GPIO_Init(GPIOB, &init);
+
     while (run1) {
         GPIO_SetBits(GPIOB, GPIO_Pin_8);
         GPIO_ResetBits(GPIOB, GPIO_Pin_8);
@@ -248,12 +299,20 @@ void job1(void const *const) {
 volatile bool run2 = true;
 
 void job2(void const *const) {
+    GPIO_InitTypeDef init;
+    GPIO_StructInit(&init);
+    init.GPIO_Mode = GPIO_Mode_Out_PP;
+    init.GPIO_Pin = GPIO_Pin_5;
+    GPIO_Init(GPIOB, &init);
+
     while (run2) {
+        CriticalSection cs;
         GPIO_SetBits(GPIOB, GPIO_Pin_5);
         GPIO_ResetBits(GPIOB, GPIO_Pin_5);
     }
 }
 
+extern "C"
 int main(void) {
     SystemInit();
 
@@ -269,13 +328,6 @@ int main(void) {
     RCC_APB2PeriphResetCmd(RCC_APB2Periph_GPIOB, ENABLE);
     RCC_APB2PeriphResetCmd(RCC_APB2Periph_GPIOB, DISABLE);
 
-    // Make Port B's pin #5 the debug output pin
-    GPIO_InitTypeDef init;
-    GPIO_StructInit(&init);
-    init.GPIO_Mode = GPIO_Mode_Out_PP;
-    init.GPIO_Pin = GPIO_Pin_5 | GPIO_Pin_8;
-    GPIO_Init(GPIOB, &init);
-
     os_init();
     os_create_thread(job1);
     os_create_thread(job2);
@@ -283,3 +335,7 @@ int main(void) {
 
     return 0;
 }
+
+} // namespace main
+} // namespace os2
+} // namespace trygvis

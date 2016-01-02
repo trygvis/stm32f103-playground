@@ -13,12 +13,6 @@ extern uint32_t _bss_start, _bss_end;
 
 extern int main();
 
-template<typename T, size_t N>
-static inline
-size_t SizeOfArray(const T(&)[N]) {
-    return N;
-}
-
 void init_high() {
     // Copy data from flash to ram
     uint32_t *src = &_copy_data_load;
