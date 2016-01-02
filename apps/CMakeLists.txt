@@ -1,1 +1,6 @@
 add_subdirectory(dma1)
+add_subdirectory(os1)
+add_subdirectory(os2)
+add_subdirectory(serial1)
+add_subdirectory(serial2)
+add_subdirectory(test1)

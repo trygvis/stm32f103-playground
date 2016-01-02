@@ -8,7 +8,7 @@ add_executable(host1.elf host1.cpp
 
 target_include_directories(host1.elf PUBLIC
         ../tinyprintf
-        ../include)
+        ../playground/include)
 target_compile_definitions(host1.elf PUBLIC TINYPRINTF_DEFINE_TFP_SPRINTF=0 TINYPRINTF_OVERRIDE_LIBC=0)
 
 add_executable(elf3 elf3.cpp)
