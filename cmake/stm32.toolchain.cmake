@@ -22,13 +22,13 @@ set(CMAKE_SYSTEM_PROCESSOR arm)
 set(CMAKE_CROSSCOMPILING 1)
 
 set(TARGET_FLAGS "-mcpu=cortex-m3 -mthumb")
-set(BASE_FLAGS "-Wall -g -ffunction-sections -fdata-sections ${TARGET_FLAGS}")
+set(BASE_FLAGS "-O3 -ffreestanding -nostdlib -Wall -Wextra -g -ffunction-sections -fdata-sections ${TARGET_FLAGS}")
 
-set(CMAKE_C_FLAGS "${BASE_FLAGS}" CACHE STRING "c flags") # XXX Generate TIME_T dynamically.
+set(CMAKE_C_FLAGS "${BASE_FLAGS}" CACHE STRING "c flags")
 set(CMAKE_CXX_FLAGS "${BASE_FLAGS} -fno-exceptions -fno-rtti -felide-constructors -std=c++14" CACHE STRING "c++ flags")
 
-set(LINKER_FLAGS "-O3 ${TARGET_FLAGS}")
-set(LINKER_LIBS "-larm_cortexM4l_math -lm")
+set(LINKER_FLAGS "-O3 -Wl,--gc-sections ${TARGET_FLAGS}")
+#set(LINKER_LIBS "-larm_cortexM4l_math -lm")
 
 set(CMAKE_EXE_LINKER_FLAGS "${LINKER_FLAGS}" CACHE STRING "linker flags" FORCE)
 

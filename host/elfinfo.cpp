@@ -246,7 +246,7 @@ int main(int argc, char **argv) {
         char size[100];
         to_iso(s.size, size);
         int used_pct = (int) (double(s.used) / double(s.size) * 100.0);
-        printf("%4s %08" PRIx64 " %08" PRIx64 " %5s %6" PRId64 " %d%%\n", to_str(s.type), s.start, s.end, size, s.used,
+        printf("%4s %08" PRIx64 " %08" PRIx64 " %5s %6" PRId64 " %3d%%\n", to_str(s.type), s.start, s.end, size, s.used,
                used_pct);
     });
 

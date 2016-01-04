@@ -8,8 +8,8 @@ define flash_test1
     monitor reset halt
 
     set confirm off
-    file build/test1.elf
-    load build/test1.elf
+    file build/apps/test1/test1.elf
+    load build/apps/test1/test1.elf
     set confirm on
 
     monitor stm32f1x.cpu mwb 0x20000000 0x5a 20480
@@ -23,8 +23,8 @@ define flash_serial1
     monitor reset halt
 
     set confirm off
-    file build/serial1.elf
-    load build/serial1.elf
+    file build/apps/serial1/serial1.elf
+    load build/apps/serial1/serial1.elf
     set confirm on
 
     monitor stm32f1x.cpu mwb 0x20000000 0x5a 20480
@@ -38,8 +38,8 @@ define flash_serial2
     monitor reset halt
 
     set confirm off
-    file build/serial2.elf
-    load build/serial2.elf
+    file build/apps/serial2/serial2.elf
+    load build/apps/serial2/serial2.elf
     set confirm on
 
     monitor stm32f1x.cpu mwb 0x20000000 0x5a 20480
@@ -53,8 +53,8 @@ define flash_os1
     monitor reset halt
 
     set confirm off
-    file build/os1.elf
-    load build/os1.elf
+    file build/apps/os1/os1.elf
+    load build/apps/os1/os1.elf
     set confirm on
 
     set $r0=0, $r1=-1, $r2=-2, $r3=-3, $r4=-4, $r5=-5, $r6=-6, $r7=-7, $r8=-8, $r9=-9, $r10=-10, $r11=-11, $r12=-12
@@ -70,8 +70,8 @@ define flash_os2
     monitor reset halt
 
     set confirm off
-    file build/os2.elf
-    load build/os2.elf
+    file build/apps/os2/os2.elf
+    load build/apps/os2/os2.elf
     set confirm on
 
     set $r0=0, $r1=-1, $r2=-2, $r3=-3, $r4=-4, $r5=-5, $r6=-6, $r7=-7, $r8=-8, $r9=-9, $r10=-10, $r11=-11, $r12=-12
@@ -89,6 +89,23 @@ define flash_dma1
     set confirm off
     file build/apps/dma1/dma1.elf
     load build/apps/dma1/dma1.elf
+    set confirm on
+
+    set $r0=0, $r1=-1, $r2=-2, $r3=-3, $r4=-4, $r5=-5, $r6=-6, $r7=-7, $r8=-8, $r9=-9, $r10=-10, $r11=-11, $r12=-12
+    monitor stm32f1x.cpu mwb 0x20000000 0x5a 20480
+
+    echo Run this if first run:\n  hbreak halt\n
+end
+
+define flash_cpp1
+    shell cd build && make cpp1.elf
+
+    monitor arm semihosting enable
+    monitor reset halt
+
+    set confirm off
+    file build/apps/cpp1/cpp1.elf
+    load build/apps/cpp1/cpp1.elf
     set confirm on
 
     set $r0=0, $r1=-1, $r2=-2, $r3=-3, $r4=-4, $r5=-5, $r6=-6, $r7=-7, $r8=-8, $r9=-9, $r10=-10, $r11=-11, $r12=-12

@@ -17,7 +17,7 @@ function(add_extra_commands target_name)
     add_custom_command(TARGET ${target_name} POST_BUILD
             COMMAND mkdir -p ${target_name}-info && arm-none-eabi-objdump -D ${target_name} > ${target_name}-info/${target_name}.asm)
     add_custom_command(TARGET ${target_name} POST_BUILD
-            COMMAND mkdir -p ${target_name}-info && arm-none-eabi-nm ${target_name} > ${target_name}-info/${target_name}.nm)
+            COMMAND mkdir -p ${target_name}-info && arm-none-eabi-nm -C ${target_name} > ${target_name}-info/${target_name}.nm)
     add_custom_command(TARGET ${target_name} POST_BUILD
             COMMAND mkdir -p ${target_name}-info && arm-none-eabi-size ${target_name} > ${target_name}-info/${target_name}.size)
     add_custom_command(TARGET ${target_name} POST_BUILD

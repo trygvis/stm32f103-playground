@@ -3,17 +3,15 @@
 #include <stm32f10x_rcc.h>
 #include <stm32f10x_gpio.h>
 #include <stddef.h>
-#include <stdarg.h>
 #include "debug.h"
 #include "tinyprintf.h"
 
 extern "C" void halt();
 
-#include "stm32f10x_conf.h"
-
 extern "C"
 __attribute__((naked))
 void HardFault_Handler_C(uint32_t *hardfault_args) {
+    (void) hardfault_args;
     halt();
 }
 

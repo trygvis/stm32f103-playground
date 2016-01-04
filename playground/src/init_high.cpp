@@ -8,26 +8,60 @@
 /**
  * Symbols that are defined by the linker
  */
+extern "C"
+{
 extern uint32_t _copy_data_load, _copy_data_store, _copy_data_store_end;
 extern uint32_t _bss_start, _bss_end;
 
-extern int main();
+typedef void(*constructor_t)();
+extern constructor_t _init_array_start[], _init_array_end[];
+}
 
+extern "C"
+void *memset(void *dst, int i, size_t n) {
+    if (n) {
+        char *d = (char *) dst;
+        char c = (char) i;
+
+        do {
+            *d = c;
+            d++;
+        } while (--n);
+    }
+    return dst;
+}
+
+extern "C"
+void *memcpy(void *destination, void *source, size_t num) {
+    char *d = (char *) destination;
+    char *s = (char *) source;
+    for (size_t i = 0; i < num; i++) {
+        d[i] = s[i];
+    }
+    return destination;
+}
+
+__attribute__((used))
 void init_high() {
     // Copy data from flash to ram
     uint32_t *src = &_copy_data_load;
-    uint32_t *dest = &_copy_data_store;
+    uint32_t *dst = &_copy_data_store;
     uint32_t *end = &_copy_data_store_end;
 
-    while (dest <= end) {
-        *dest++ = *src++;
+    while (dst <= end) {
+        *dst++ = *src++;
     }
 
     // Clear the BSS segment
-    dest = &_bss_start;
+    dst = &_bss_start;
     end = &_bss_end;
-    while (dest <= end) {
-        *dest++ = 0;
+    while (dst <= end) {
+        *dst++ = 0;
+    }
+
+    // Initialize c++ constructors
+    for (constructor_t *fn = _init_array_start; fn < _init_array_end; fn++) {
+        (*fn)();
     }
 
     main();
@@ -43,6 +77,7 @@ struct {
     uint32_t BFAR;
 } Default_Handler_Info;
 
+extern "C"
 __attribute__((used))
 void Default_Handler() {
     Default_Handler_Info = {
@@ -93,9 +128,6 @@ void Default_Handler() {
     }
     if (Default_Handler_Info.CFSR & SCB_CFSR_UNSTKERR) {
         dbg_printf("      BFSR.UNSTKERR\n");
-    }
-    if (Default_Handler_Info.CFSR & SCB_CFSR_IMPRECISERR) {
-        dbg_printf("      BFSR.IMPRECISERR\n");
     }
     if (Default_Handler_Info.CFSR & SCB_CFSR_IMPRECISERR) {
         dbg_printf("      BFSR.IMPRECISERR\n");

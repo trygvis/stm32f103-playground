@@ -16,7 +16,7 @@ SECTIONS
     {
         /* The first word has to be the initial stack pointer */
         LONG(__initial_stack_pointer);
-        */init_high.cpp.obj(.isr_vectors)
+        KEEP(*/init_high.cpp.obj(.isr_vectors))
     } >FLASH
     ASSERT(SIZEOF(.isr) > 100, "The isr_vectors section is too small")
     ASSERT(SIZEOF(.isr) < 1000, "The isr_vectors section is too big")
@@ -29,11 +29,20 @@ SECTIONS
         *(.rodata*)
     } >FLASH
 
+    .init_arrays :
+    {
+        _init_array_start = .;
+        KEEP(*(.init_array))
+        KEEP(*(SORT_BY_INIT_PRIORITY(.init_array.*)))
+        _init_array_end = .;
+    } >FLASH
+
      . = ORIGIN(RAM);
 
     .data ALIGN(4) :
     {
-        *(.data*)
+        *(.data)
+        *(.data.*)
     } >RAM AT >FLASH
 
     .bss ALIGN(4) (NOLOAD) :

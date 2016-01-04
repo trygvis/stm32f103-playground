@@ -3,13 +3,6 @@
 
 extern "C" {
 
-void init_high();
-
-/**
- * Declare all the interrupt/event handlers as weak symbols and make them aliases of the default handler.
- */
-extern void Default_Handler() __attribute__((weak));
-
 extern void _Reset_Handler();
 
 extern void NMI_Handler();
