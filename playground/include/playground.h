@@ -13,6 +13,7 @@ int main();
 extern "C"
 void Default_Handler();
 
+// TODO: replace with std::extent<>; http://en.cppreference.com/w/cpp/types/extent
 template<typename T, size_t N>
 static inline constexpr
 size_t SizeOfArray(const T(&)[N]) {

@@ -32,11 +32,11 @@ do_first_context_switch:
     msr     control, r0
     isb
 
-    // Set CONTROL.nPRIV=1 so that we run with in unprivileged mode
-    mrs     r0, control
-    orr     r0, #1
-    msr     control, r0
-    isb
+//    // Set CONTROL.nPRIV=1 so that we run with in unprivileged mode
+//    mrs     r0, control
+//    orr     r0, #1
+//    msr     control, r0
+//    isb
 
     // Restore the data from hardware_frame_t.
     pop     {r0 - r3, r12, lr}
@@ -44,11 +44,11 @@ do_first_context_switch:
     pop     {r4, r5}
     bx      r4
 
-.thumb_func
-.global _ZN7trygvis3os22os10rescheduleEv
-_ZN7trygvis3os22os10rescheduleEv:
-    svc     #0
-    bx      lr
+// .thumb_func
+// .global _ZN7trygvis3os22os10rescheduleEv
+// _ZN7trygvis3os22os10rescheduleEv:
+//     svc     #0
+//     bx      lr
 
 // A very simple idle task, just to know exactly which registers that are used and what their values are supposed to be.
 // Toggles GPIO B, pin #6 on a STM32F103

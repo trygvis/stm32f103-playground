@@ -18,6 +18,13 @@ extern constructor_t _init_array_start[], _init_array_end[];
 }
 
 extern "C"
+__attribute__((noreturn))
+void __cxa_pure_virtual() {
+    while (1) {
+    }
+}
+
+extern "C"
 void *memset(void *dst, int i, size_t n) {
     if (n) {
         char *d = (char *) dst;

@@ -4,7 +4,6 @@
 #include <stm32f10x.h>
 #include <stm32f10x_rcc.h>
 #include <stm32f10x_gpio.h>
-#include <inttypes.h>
 
 #include "debug.h"
 #include "tinyprintf.h"
@@ -13,12 +12,86 @@
 namespace trygvis {
 namespace os2 {
 
+namespace generic {
+
+template<typename _index_t, unsigned bits>
+class bitmap {
+    static_assert(std::is_signed<_index_t>::value, "_index_t has to be a signed type");
+
+public:
+    typedef _index_t index_t;
+
+    virtual void assign(index_t bit, bool value) = 0;
+
+    virtual void set(index_t bit) = 0;
+
+    virtual bool get(index_t bit) = 0;
+
+    virtual bool is_empty() = 0;
+
+    virtual index_t find_first() = 0;
+};
+
+// TODO: these operations has to be made atomic
+class bitmap_32 : public bitmap<int8_t, 32> {
+public:
+    bitmap_32() : map_(0) {
+    }
+
+    void assign(index_t bit, bool value) {
+        if (value) {
+            map_ |= 1 << bit;
+        } else {
+            map_ &= ~(1 << bit);
+        }
+    }
+
+    void set(index_t bit) {
+        map_ |= 1 << bit;
+    }
+
+    void clear(index_t bit) {
+        map_ &= ~(1 << bit);
+    }
+
+    bool get(index_t bit) {
+        return (map_ & 1 << bit) > 0;
+    }
+
+    bool is_empty() {
+        return map_ == 0;
+    }
+
+    index_t find_first() {
+        for (index_t i = 0; i < 32; i++) {
+            if (get(i)) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+private:
+    uint32_t map_;
+};
+
+} // generic
+
+namespace os {
+
+using namespace trygvis::os2::generic;
+
+
 /*
  * System configuration
  */
 constexpr bool enable_stack_smashing_check = false;
 
-namespace os {
+typedef bitmap_32 process_map;
+
+typedef int8_t pid_t;
+#define PRIpid_t "d"
 
 enum class exc_return_t : uint32_t {
     RETURN_TO_HANDLER_MODE_USE_MSP = 0xFFFFFFF1,
@@ -38,8 +111,20 @@ struct task_t {
         this->current_stack = current_stack;
         this->stack_start = stack_start;
         this->stack_end = stack_end;
-        flags = 0x01;
+        set_active();
         set_ready();
+    }
+
+    void fini() {
+        this->flags = 0;
+    }
+
+    void set_active() {
+        flags |= 0x01;
+    }
+
+    bool is_active() {
+        return (flags & 0x01) > 0;
     }
 
     bool is_ready() {
@@ -68,9 +153,9 @@ static_assert(stack_size % 4 == 0, "stack_size must be word-aligned.");
 task_t tasks[max_task_count];
 uint8_t stacks[SizeOfArray(tasks)][stack_size];
 uint8_t task_count = 0;
-uint32_t current_task;
+pid_t current_task;
 
-const unsigned int SYSTICK_FREQUENCY_HZ = 10;
+const unsigned int SYSTICK_FREQUENCY_HZ = 50;
 
 struct hardware_frame_t {
     uint32_t r0;
@@ -107,7 +192,7 @@ void HardFault_Handler_C(uint32_t *stack) {
     dbg_printf("psr = 0x%08lx (%lu)\n", stack[7], stack[7]);
     dbg_printf("\n");
 
-    dbg_printf("current_task = %" PRIu32 "\n", current_task);
+    dbg_printf("current_task = %" PRIpid_t "\n", current_task);
     dbg_printf("\n");
 
     Default_Handler();
@@ -139,12 +224,22 @@ void SVC_Handler() {
 /**
  * Implemented in assembly, simply executes an SVC instruction.
  */
-__attribute__((used))
-extern void reschedule();
+//__attribute__((used))
+//extern void reschedule();
 
-// This doesn't quite work.
+void reschedule() {
+//    dbg_printf("rescheduling %" PRIpid_t ", ready=%d\n", current_task, tasks[current_task].is_ready());
+    SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
+}
+
+// TODO: test properly
+__attribute__((noreturn))
 void thread_end() {
-    dbg_printf("thread_end(). current_task=%" PRIu32 "\n", current_task);
+    dbg_printf("thread_end(): current_task=%" PRIpid_t "\n", current_task);
+    tasks[current_task].fini();
+    reschedule();
+    while (1) {
+    }
 }
 
 extern "C" void asm_idle_task(const void *const);
@@ -227,19 +322,28 @@ void os_create_thread(void (task)(void const *const), bool create_sw = true) {
 }
 
 static
-uint32_t find_first_ready_task() {
+pid_t find_first_ready_task() {
+//    dbg_printf("find_first_ready_task: current_task=%" PRIpid_t ", max_task_count=%d\n", current_task, max_task_count);
+//    for(int i = 0; i < max_task_count; i++) {
+//        task_t *t = &tasks[i];
+//        dbg_printf("task #%d, active=%d, ready=%d\n", i, t->is_active(), t->is_ready());
+//    }
+
     task_t *t;
-    // Start from the task after the current one
-    uint32_t idx = current_task;
+
+    pid_t end_task = current_task == 0 ? pid_t(1) : current_task;
+    pid_t idx = end_task;
     do {
         idx++;
+//        dbg_printf("idx=%" PRIpid_t "\n", idx);
         // If we have checked the entire array, start from the first non-idle task
         if (idx == max_task_count) {
             idx = 1;
         }
 
         t = &tasks[idx];
-        if (idx == current_task) {
+        if (idx == end_task) {
+//            dbg_printf("wrap\n");
             // If we have checked all other tasks, use the current one if it is still ready. if not, use the idle task
             if (!t->is_ready()) {
                 idx = 0;
@@ -249,6 +353,7 @@ uint32_t find_first_ready_task() {
 
     } while (!t->is_ready());
 
+//    dbg_printf("new task: %d\n", idx);
     return idx;
 }
 
@@ -263,7 +368,7 @@ void check_stack_smashing<false>(task_t *) {
 template<>
 void check_stack_smashing<true>(task_t *t) {
     if (t->current_stack < t->stack_end) {
-        dbg_printf("STACK SMASHED: task #%" PRIu32 ", end=%p, current=%p\n", current_task,
+        dbg_printf("STACK SMASHED: task #%" PRIpid_t ", end=%p, current=%p\n", current_task,
                    static_cast<void *>(t->current_stack), static_cast<void *>(t->current_stack));
     }
 }
@@ -276,11 +381,14 @@ task_t *select_next_task(uint8_t *current_stack) {
 
     check_stack_smashing<enable_stack_smashing_check>(t);
 
-    uint32_t new_task = find_first_ready_task();
+    pid_t new_task = find_first_ready_task();
 
     if (new_task != current_task) {
+//        dbg_printf("switch: %d -> %d\n", current_task, new_task);
         t = &tasks[new_task];
         current_task = new_task;
+    } else {
+//        dbg_printf("no switch: %d\n", current_task);
     }
 
     return t;
@@ -294,7 +402,10 @@ void os_init() {
     NVIC_SetPriority(SysTick_IRQn, 0xff);
     NVIC_SetPriority(PendSV_IRQn, 0xff);
 
-    SysTick_Config(SystemCoreClock / SYSTICK_FREQUENCY_HZ);
+    uint32_t err = SysTick_Config(SystemCoreClock / SYSTICK_FREQUENCY_HZ);
+    if (err) {
+        dbg_printf("Failed init of system timer.");
+    }
 
     GPIO_InitTypeDef init;
     GPIO_StructInit(&init);
@@ -337,23 +448,53 @@ void os_start() {
 //};
 
 class Mutex final {
+private:
+    process_map sleepers;
+    static const uint32_t UNLOCKED = 0x80000000;
+
 public:
-    Mutex() : owner(UINT32_MAX) {
+    Mutex() : owner(UNLOCKED) {
     }
 
     void lock() {
-        uint32_t old;
+        static_assert(sizeof(process_map::index_t) <= 31,
+                      "The process map's index type has to fit within 31 bits.");
 
-        do {
-            // read the semaphore value
-            old = __LDREXW(&owner);
-            // loop again if it is locked and we are blocking
-            // or setting it with strex failed
-        } while ((old == current_task) || __STREXW(current_task, &owner) != 0);
+        pid_t old = pid_t(__LDREXW(&owner));
+
+        if (old == current_task) {
+            return;
+        }
+
+        if (__STREXW(uint32_t(current_task), &owner) == 0) {
+            return;
+        }
+
+        tasks[current_task].set_blocked();
+        sleepers.set(current_task);
+        reschedule();
     }
 
+//    void lock() {
+//        uint32_t old;
+//
+//        do {
+//            // read the semaphore value
+//            old = __LDREXW(&owner);
+//            // loop again if it is locked and we are blocking
+//            // or setting it with strex failed
+//        } while ((old == current_task) || __STREXW(current_task, &owner) != 0);
+//    }
+
     void unlock() {
-        owner = UINT32_MAX;
+        owner = UNLOCKED;
+        pid_t lucky_process = sleepers.find_first();
+
+        if (lucky_process >= 0) {
+//            dbg_printf("marking %" PRIpid_t " as ready\n", lucky_process);
+            tasks[lucky_process].set_ready();
+            reschedule();
+        }
     }
 
 private:
@@ -383,6 +524,8 @@ namespace os = trygvis::os2::os;
 volatile bool run1 = true;
 
 os::Mutex mutex;
+
+volatile int shared_variable;
 
 void job1(void const *const) {
     GPIO_InitTypeDef init;
@@ -430,6 +573,8 @@ int main(void) {
 
     RCC_APB2PeriphResetCmd(RCC_APB2Periph_GPIOB, ENABLE);
     RCC_APB2PeriphResetCmd(RCC_APB2Periph_GPIOB, DISABLE);
+
+    shared_variable = 0;
 
     os::os_init();
     os::os_create_thread(job1);
