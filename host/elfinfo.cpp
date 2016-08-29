@@ -10,6 +10,7 @@
 #include <getopt.h>
 #include <inttypes.h>
 #include <elf.h>
+#include <ctype.h>
 
 using std::vector;
 
