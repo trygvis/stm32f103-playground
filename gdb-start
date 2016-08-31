@@ -1,5 +1,6 @@
 target remote tcp:localhost:3333
 monitor reset halt
+set remotetimeout 10
 
 define flash_test1
     shell cd build && make test1.elf
@@ -40,6 +41,36 @@ define flash_serial2
     set confirm off
     file build/apps/serial2/serial2.elf
     load build/apps/serial2/serial2.elf
+    set confirm on
+
+    monitor stm32f1x.cpu mwb 0x20000000 0x5a 20480
+    hbreak halt
+end
+
+define flash_stepper1
+    shell cd build && make stepper1.elf
+
+    monitor arm semihosting enable
+    monitor reset halt
+
+    set confirm off
+    file build/apps/stepper1/stepper1.elf
+    load build/apps/stepper1/stepper1.elf
+    set confirm on
+
+    monitor stm32f1x.cpu mwb 0x20000000 0x5a 20480
+    hbreak halt
+end
+
+define flash_stepper2
+    shell cd build && make stepper2.elf
+
+    monitor arm semihosting enable
+    monitor reset halt
+
+    set confirm off
+    file build/apps/stepper2/stepper2.elf
+    load build/apps/stepper2/stepper2.elf
     set confirm on
 
     monitor stm32f1x.cpu mwb 0x20000000 0x5a 20480
