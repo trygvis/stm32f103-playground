@@ -1,3 +1,21 @@
+# Getting started
+
+The 1-2-3 guide:
+
+    mkdir build
+    cd build
+    cmake ..
+    make
+
+and it should build a set of imaged you can flash.
+
+# TODOs
+
+o Upgrade to cmake 3.6 which gives some improvements and fixes this:
+
+    The CMAKE_FORCE_C_COMPILER macro is deprecated.  Instead just set CMAKE_C_COMPILER and allow CMake to identify the compiler.
+
+o Add cmake dependency/find_package on libelf.
 # Resources
 
 * http://www.downloads.seng.de/HowTo_ToolChain_STM32_Ubuntu.pdf
@@ -14,17 +32,17 @@
 * http://stackoverflow.com/questions/32422075/arm-bare-metal-binary-linking
 * https://github.com/ckormanyos/real-time-cpp/blob/master/ref_app/target/micros/stm32f100/make/stm32f100.ld
 * http://www.bravegnu.org/gnu-eprog/c-startup.html
-        
+
 * http://www.st.com/web/en/catalog/tools/PF257890
 ** STSW-STM32054	
-        
+
 # Programming with OpenOCD
-        
+
     reset halt
-    flash probe 0 
+    flash probe 0
     stm32f1x mass_erase 0
     flash write_bank 0 test1.elf.bin 0
-    reset run 
+    reset run
 
 # Registers
 
@@ -96,5 +114,5 @@ Show details on each frame:
     Stack frame at 0x20000fe0:
      pc = 0x8000050 in HardFault_Handler; saved pc = 0xfffffff9
      called by frame at 0x20001000
-     Arglist at 0x20000fe0, args: 
+     Arglist at 0x20000fe0, args:
      Locals at 0x20000fe0, Previous frame's sp is 0x20000fe0
