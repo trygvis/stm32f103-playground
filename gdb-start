@@ -144,3 +144,18 @@ define flash_cpp1
 
     echo Run this if first run:\n  hbreak halt\n
 end
+
+define flash_blinky
+    shell cd build && make blinky.elf
+
+    monitor arm semihosting enable
+    monitor reset halt
+
+    set confirm off
+    file build/apps/blinky/blinky.elf
+    load build/apps/blinky/blinky.elf
+    set confirm on
+
+    monitor stm32f1x.cpu mwb 0x20000000 0x5a 20480
+    hbreak halt
+end
