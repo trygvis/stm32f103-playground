@@ -1,3 +1,5 @@
+#include <stddef.h>
+
 #ifndef PLAYGROUND_H
 #define PLAYGROUND_H
 
