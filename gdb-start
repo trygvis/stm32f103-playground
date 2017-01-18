@@ -174,3 +174,18 @@ define flash_adc1
     monitor stm32f1x.cpu mwb 0x20000000 0x5a 20480
     hbreak halt
 end
+
+define flash_max7219
+    shell cd build && make adc1.elf
+
+    monitor arm semihosting enable
+    monitor reset halt
+
+    set confirm off
+    file build/apps/max7219/max7219.elf
+    load build/apps/max7219/max7219.elf
+    set confirm on
+
+    monitor stm32f1x.cpu mwb 0x20000000 0x5a 20480
+    hbreak halt
+end
