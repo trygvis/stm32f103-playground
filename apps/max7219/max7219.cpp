@@ -7,9 +7,14 @@
 #include "debug.h"
 #include "tinyprintf.h"
 #include "playground.h"
+#include "delay.h"
 
 
-#define REG_TEST 0x0F
+#define REG_CHANNEL0        0x01
+#define REG_INTENSITY       0x0A
+#define REG_SCAN_LIMIT      0x0B
+#define REG_SHUTDOWN        0x0C
+#define REG_TEST            0x0F
 
 
 /*
@@ -43,22 +48,6 @@ void HardFault_Handler_C(uint32_t *hardfault_args) {
 }
 
 volatile bool run = true;
-
-
-/*
- * Delay
- */
-void delay() {
-	for( int i = 0; i < 1000000; i++ ) {
-		__NOP()	;
-	}
-}
-
-void shortDelay() {
-    for( int i = 0; i < 10000; i++ ) {
-        __NOP()	;
-    }
-}
 
 
 void rccInit() {
@@ -109,37 +98,43 @@ void spiInit() {
 }
 
 
-/*
-void SPIx_Transfer(uint8_t data) {
-    // Write data to be transmitted to the SPI data register
-    SPI1->DR = data;
-    // Wait until transmit complete
-    while (!(SPI1->SR & (SPI_I2S_FLAG_TXE)));
-}
- */
-
-
 void send_data( uint8_t address, uint8_t data ) {
     dbg_printf("Sending data..... ");
 
     while (SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_TXE) == RESET);
 
+    DelayUs(30);
     GPIO_ResetBits(GPIOB, GPIO_Pin_5);
-    shortDelay();
+    DelayUs(30);
     SPI_I2S_SendData(SPI1, address);
-    shortDelay();
+    DelayUs(30);
     SPI_I2S_SendData(SPI1, data);
-    shortDelay();
+    DelayUs(30);
     GPIO_SetBits(GPIOB, GPIO_Pin_5);
 
     dbg_printf("Done\n");
 }
 
 
-void self_test(void) {
+void max7219_self_test(void) {
     send_data(REG_TEST, 0x01);
-    delay();
+    DelayMs(500);
     send_data(REG_TEST, 0x00);
+}
+
+
+void max7219_init() {
+    // Enable all channels
+    send_data(REG_SCAN_LIMIT, 7);
+}
+
+
+void max7219_reset() {
+    // Shutdown
+    send_data(REG_SHUTDOWN, 0x00);
+    
+    // Normal operation
+    send_data(REG_SHUTDOWN, 0x01);
 }
 
 
@@ -154,13 +149,15 @@ int main() {
     rccInit();
     gpioInit();
     spiInit();
+    DelayInit();
 
-
-    self_test();
+    max7219_init();
+    //max7219_reset();
+    max7219_self_test();
 
 
     while (run) {
-        delay();
+        __NOP();
     }
 
     return 0;

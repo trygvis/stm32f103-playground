@@ -49,7 +49,10 @@ add_library(playground OBJECT
         playground/include/playground.h
 
         playground/src/debug.cpp
-        playground/include/debug.h)
+        playground/include/debug.h
+
+        playground/src/delay.c
+        playground/include/delay.h)
 target_include_directories(playground PUBLIC
         playground/include
         tinyprintf
