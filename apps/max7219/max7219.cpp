@@ -15,6 +15,7 @@
 #define REG_SCAN_LIMIT      0x0B
 #define REG_SHUTDOWN        0x0C
 #define REG_TEST            0x0F
+#define REG_DECODE_MODE     0x09
 
 
 /*
@@ -103,14 +104,15 @@ void send_data( uint8_t address, uint8_t data ) {
 
     while (SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_TXE) == RESET);
 
-    DelayUs(30);
+    DelayUs(100);
     GPIO_ResetBits(GPIOB, GPIO_Pin_5);
-    DelayUs(30);
+    DelayUs(100);
     SPI_I2S_SendData(SPI1, address);
-    DelayUs(30);
+    DelayUs(100);
     SPI_I2S_SendData(SPI1, data);
-    DelayUs(30);
+    DelayUs(100);
     GPIO_SetBits(GPIOB, GPIO_Pin_5);
+    DelayUs(100);
 
     dbg_printf("Done\n");
 }
@@ -124,17 +126,47 @@ void max7219_self_test(void) {
 
 
 void max7219_init() {
-    // Enable all channels
-    send_data(REG_SCAN_LIMIT, 7);
+    send_data(REG_TEST, 0x00);  // Virker
+    DelayMs(10);
+    send_data(REG_SCAN_LIMIT, 0x07);    // Virker
+    DelayMs(10);
+    send_data(REG_DECODE_MODE, 0x00);
+    DelayMs(10);
+    send_data(REG_SHUTDOWN, 0x01);
+    DelayMs(10);
 }
 
 
 void max7219_reset() {
     // Shutdown
     send_data(REG_SHUTDOWN, 0x00);
-    
+
     // Normal operation
     send_data(REG_SHUTDOWN, 0x01);
+}
+
+
+void max7219_clear_all() {
+    send_data(1, 0b00000000);
+    send_data(2, 0b00000000);
+    send_data(3, 0b00000000);
+    send_data(4, 0b00000000);
+    send_data(5, 0b00000000);
+    send_data(6, 0b00000000);
+    send_data(7, 0b00000000);
+    send_data(8, 0b00000000);
+}
+
+
+void max7219_turn_all() {
+    send_data(1, 0b00011000);
+    send_data(2, 0b00011000);
+    send_data(3, 0b00011000);
+    send_data(4, 0b11111111);
+    send_data(5, 0b11111111);
+    send_data(6, 0b00011000);
+    send_data(7, 0b00011000);
+    send_data(8, 0b00011000);
 }
 
 
@@ -144,7 +176,7 @@ void max7219_reset() {
 int main() {
     SystemInit();
 
-    dbg_printf("MAX7219 :D\n");
+    dbg_printf("MAX7219!!!\n");
 
     rccInit();
     gpioInit();
@@ -152,12 +184,20 @@ int main() {
     DelayInit();
 
     max7219_init();
-    //max7219_reset();
-    max7219_self_test();
+
+    send_data( REG_INTENSITY, 0x01 );
 
 
     while (run) {
-        __NOP();
+        dbg_printf("TURN ON\n");
+
+        max7219_turn_all();
+
+        DelayMs(2000);
+
+        max7219_clear_all();
+
+        DelayMs(2000);
     }
 
     return 0;
