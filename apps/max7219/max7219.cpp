@@ -9,6 +9,7 @@
 #include "playground.h"
 
 
+#define REG_TEST 0x0F
 
 
 /*
@@ -48,7 +49,7 @@ volatile bool run = true;
  * Delay
  */
 void delay() {
-	for( int i = 0; i < 10000000; i++ ) {
+	for( int i = 0; i < 1000000; i++ ) {
 		__NOP()	;
 	}
 }
@@ -60,47 +61,86 @@ void shortDelay() {
 }
 
 
+void rccInit() {
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO
+                           | RCC_APB2Periph_SPI1
+                           | RCC_APB2Periph_GPIOA
+                           | RCC_APB2Periph_GPIOB,
+                           ENABLE);
+}
+
 
 void gpioInit() {
+    GPIO_InitTypeDef gpioInit;
 
+    // Configure NSS pin
+    GPIO_StructInit(&gpioInit);
+    gpioInit.GPIO_Pin = GPIO_Pin_5;
+    gpioInit.GPIO_Mode = GPIO_Mode_Out_PP;
+    gpioInit.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOB, &gpioInit);
+
+    // Configure SCK and MOSI pin
+    GPIO_StructInit(&gpioInit);
+    gpioInit.GPIO_Pin = GPIO_Pin_5 | GPIO_Pin_7;
+    gpioInit.GPIO_Mode = GPIO_Mode_AF_PP;
+    gpioInit.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOA, &gpioInit);
 }
 
 
 void spiInit() {
-    // Configure SPI MOSI to be on pin PA7, SCK on PA5 and NSS on PA15
+    // Configure SPI MOSI to be on pin PA7, SCK on PA5 and NSS on PB5
 
-    SPI_InitTypeDef spiInit;
-    SPI_StructInit(&spiInit);
-    spiInit.SPI_Direction = SPI_Direction_1Line_Tx; // OK
-    spiInit.SPI_Mode = SPI_Mode_Master;     // OK
-    spiInit.SPI_DataSize = SPI_DataSize_8b; // OK tror jeg
-    spiInit.SPI_CPOL = SPI_CPOL_Low;        // Clock Polarity
-    spiInit.SPI_CPHA = SPI_CPHA_1Edge;      // Clock Phase
-    spiInit.SPI_NSS = SPI_NSS_Soft;
-    spiInit.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_256;
-    spiInit.SPI_FirstBit = SPI_FirstBit_MSB;    // OK
+    SPI_InitTypeDef spiInit = {
+            SPI_Direction         : SPI_Direction_1Line_Tx,
+            SPI_Mode              : SPI_Mode_Master,
+            SPI_DataSize          : SPI_DataSize_8b,
+            SPI_CPOL              : SPI_CPOL_Low,
+            SPI_CPHA              : SPI_CPHA_1Edge,
+            SPI_NSS               : SPI_NSS_Soft,
+            SPI_BaudRatePrescaler : SPI_BaudRatePrescaler_256,
+            SPI_FirstBit          : SPI_FirstBit_MSB
+    };
+
     SPI_I2S_DeInit(SPI1);
     SPI_Init(SPI1, &spiInit);
     SPI_Cmd(SPI1, ENABLE);
 }
 
 
-
-void spi_write(char &c) {
-    while (SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_TXE) == RESET);
-
-    GPIO_SetBits(GPIOB, GPIO_Pin_5);
-    SPI_I2S_SendData(SPI1, (uint16_t) c);
-}
-
-
+/*
 void SPIx_Transfer(uint8_t data) {
     // Write data to be transmitted to the SPI data register
     SPI1->DR = data;
     // Wait until transmit complete
     while (!(SPI1->SR & (SPI_I2S_FLAG_TXE)));
 }
+ */
 
+
+void send_data( uint8_t address, uint8_t data ) {
+    dbg_printf("Sending data..... ");
+
+    while (SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_TXE) == RESET);
+
+    GPIO_ResetBits(GPIOB, GPIO_Pin_5);
+    shortDelay();
+    SPI_I2S_SendData(SPI1, address);
+    shortDelay();
+    SPI_I2S_SendData(SPI1, data);
+    shortDelay();
+    GPIO_SetBits(GPIOB, GPIO_Pin_5);
+
+    dbg_printf("Done\n");
+}
+
+
+void self_test(void) {
+    send_data(REG_TEST, 0x01);
+    delay();
+    send_data(REG_TEST, 0x00);
+}
 
 
 /*
@@ -109,99 +149,17 @@ void SPIx_Transfer(uint8_t data) {
 int main() {
     SystemInit();
 
-    // https://github.com/ppkt/device_lib
+    dbg_printf("MAX7219 :D\n");
 
-    dbg_printf("MAX7219\n");
-
-
-
-
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO
-                           | RCC_APB2Periph_SPI1
-                           | RCC_APB2Periph_GPIOA
-                           | RCC_APB2Periph_GPIOB
-                           | RCC_APB2Periph_GPIOC,
-                           ENABLE);
-
-
-
-
-
-
-    //RCC_APB2PeriphResetCmd(RCC_APB2Periph_GPIOB, ENABLE);
-    //RCC_APB2PeriphResetCmd(RCC_APB2Periph_GPIOB, DISABLE);
-    GPIO_InitTypeDef gpioInit;
-    GPIO_StructInit(&gpioInit);
-    gpioInit.GPIO_Pin = GPIO_Pin_5;
-    gpioInit.GPIO_Mode = GPIO_Mode_Out_PP;
-    gpioInit.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_Init(GPIOB, &gpioInit);
-
-
-
-
-    //RCC_APB2PeriphResetCmd(RCC_APB2Periph_GPIOA, ENABLE);
-    //RCC_APB2PeriphResetCmd(RCC_APB2Periph_GPIOA, DISABLE);
-    GPIO_StructInit(&gpioInit);
-    gpioInit.GPIO_Pin = GPIO_Pin_5 | GPIO_Pin_7 | GPIO_Pin_15;
-    gpioInit.GPIO_Mode = GPIO_Mode_AF_PP;
-    gpioInit.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_Init(GPIOA, &gpioInit);
-
-
-    GPIO_SetBits(GPIOB, GPIO_Pin_5);
-
-
-
-
-
-    //gpioInit();
+    rccInit();
+    gpioInit();
     spiInit();
 
 
-    delay();
-
-    uint8_t address = 0x0F;
-    uint8_t value = 0x01;
-
-
-    while (SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_TXE) == RESET);
-
-
-    dbg_printf("Sending data.....\n");
-    GPIO_ResetBits(GPIOB, GPIO_Pin_5);
-    shortDelay();
-    //SPI_I2S_SendData(SPI1, address);
-    SPIx_Transfer(address);
-    shortDelay();
-    //SPI_I2S_SendData(SPI1, value);
-    SPIx_Transfer(value);
-    shortDelay();
-    GPIO_SetBits(GPIOB, GPIO_Pin_5);
-    dbg_printf("Done\n");
-
-
-
-
-    dbg_printf("Sending data.....\n");
-    GPIO_ResetBits(GPIOB, GPIO_Pin_5);
-    shortDelay();
-    //SPI_I2S_SendData(SPI1, address);
-    SPIx_Transfer(address);
-    shortDelay();
-    //SPI_I2S_SendData(SPI1, value);
-    SPIx_Transfer(0x00);    // Turn off test mode
-    shortDelay();
-    GPIO_SetBits(GPIOB, GPIO_Pin_5);
-    dbg_printf("Done\n");
-
+    self_test();
 
 
     while (run) {
-        dbg_printf("BLINK\n");
-        //GPIO_SetBits(GPIOB, GPIO_Pin_5);
-        delay();
-        //GPIO_ResetBits(GPIOB, GPIO_Pin_5);
         delay();
     }
 
