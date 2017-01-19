@@ -100,21 +100,17 @@ void spiInit() {
 
 
 void send_data( uint8_t address, uint8_t data ) {
-    dbg_printf("Sending data..... ");
-
     while (SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_TXE) == RESET);
 
-    DelayUs(100);
+    DelayUs(30);
     GPIO_ResetBits(GPIOB, GPIO_Pin_5);
-    DelayUs(100);
+    DelayUs(30);
     SPI_I2S_SendData(SPI1, address);
-    DelayUs(100);
+    DelayUs(30);
     SPI_I2S_SendData(SPI1, data);
-    DelayUs(100);
+    DelayUs(30);
     GPIO_SetBits(GPIOB, GPIO_Pin_5);
-    DelayUs(100);
-
-    dbg_printf("Done\n");
+    DelayUs(30);
 }
 
 
@@ -126,14 +122,10 @@ void max7219_self_test(void) {
 
 
 void max7219_init() {
-    send_data(REG_TEST, 0x00);  // Virker
-    DelayMs(10);
-    send_data(REG_SCAN_LIMIT, 0x07);    // Virker
-    DelayMs(10);
-    send_data(REG_DECODE_MODE, 0x00);
-    DelayMs(10);
-    send_data(REG_SHUTDOWN, 0x01);
-    DelayMs(10);
+    send_data(REG_TEST, 0x00);          // Turn off self test
+    send_data(REG_SCAN_LIMIT, 0x07);    // Enable all
+    send_data(REG_DECODE_MODE, 0x00);   // Don't decode BCD
+    send_data(REG_SHUTDOWN, 0x01);      // Turn on chip
 }
 
 
@@ -176,7 +168,7 @@ void max7219_turn_all() {
 int main() {
     SystemInit();
 
-    dbg_printf("MAX7219!!!\n");
+    dbg_printf("MAX7219!\n");
 
     rccInit();
     gpioInit();
@@ -185,7 +177,7 @@ int main() {
 
     max7219_init();
 
-    send_data( REG_INTENSITY, 0x01 );
+    send_data( REG_INTENSITY, 0x00 );   // Intensity between 0x00 and 0xFF
 
 
     while (run) {
