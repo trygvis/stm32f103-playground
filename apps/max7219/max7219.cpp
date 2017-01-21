@@ -89,8 +89,9 @@ void spiInit() {
             SPI_CPOL              : SPI_CPOL_Low,
             SPI_CPHA              : SPI_CPHA_1Edge,
             SPI_NSS               : SPI_NSS_Soft,
-            SPI_BaudRatePrescaler : SPI_BaudRatePrescaler_256,
-            SPI_FirstBit          : SPI_FirstBit_MSB
+            SPI_BaudRatePrescaler : SPI_BaudRatePrescaler_64,
+            SPI_FirstBit          : SPI_FirstBit_MSB,
+            SPI_CRCPolynomial     : 0
     };
 
     SPI_I2S_DeInit(SPI1);
@@ -102,21 +103,21 @@ void spiInit() {
 void send_data( uint8_t address, uint8_t data ) {
     while (SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_TXE) == RESET);
 
-    DelayUs(30);
+    //DelayUs(30);
     GPIO_ResetBits(GPIOB, GPIO_Pin_5);
-    DelayUs(30);
+    //DelayUs(30);
     SPI_I2S_SendData(SPI1, address);
-    DelayUs(30);
+    DelayUs(30);    // Remove and get wrong result
     SPI_I2S_SendData(SPI1, data);
-    DelayUs(30);
+    DelayUs(30);    // Remove and get wrong result
     GPIO_SetBits(GPIOB, GPIO_Pin_5);
-    DelayUs(30);
+    //DelayUs(30);
 }
 
 
 void max7219_self_test(void) {
     send_data(REG_TEST, 0x01);
-    DelayMs(500);
+    DelayMs(1000);
     send_data(REG_TEST, 0x00);
 }
 
@@ -178,6 +179,7 @@ int main() {
     max7219_init();
 
     send_data( REG_INTENSITY, 0x00 );   // Intensity between 0x00 and 0xFF
+
 
 
     while (run) {
