@@ -93,6 +93,14 @@ void spiInit() {
 
 
 
+
+
+
+
+
+
+
+
 #define OP_NOOP         0
 #define OP_DIGIT0       1
 #define OP_DIGIT1       2
@@ -108,20 +116,88 @@ void spiInit() {
 #define OP_SHUTDOWN    12
 #define OP_DISPLAYTEST 15
 
-const int size = 32;
-uint8_t buffer[size];
+#define SIZE 32
 
 
+class Max7219 {
+
+public:
+    Max7219();
+    void spiTransfer(uint8_t opcode, uint8_t data);
+    void write();
+    void drawPixel(int x, int y);
+
+private:
+    uint8_t buffer[SIZE];
+
+    void setBit(uint8_t &byte, int position);
+};
 
 
-void spiTransfer(uint8_t opcode, uint8_t data) {
+Max7219::Max7219() {
+    spiTransfer(OP_DISPLAYTEST, 0);
+    spiTransfer(OP_SCANLIMIT, 7);
+    spiTransfer(OP_DECODEMODE, 0);
+    spiTransfer(OP_SHUTDOWN, 1);
+    spiTransfer(OP_INTENSITY, 0);
+
+    for( int i = 0; i < SIZE; i++ ) {
+        buffer[i] = 0x00;
+    }
+
+    buffer[0] = 0b01111000;
+    buffer[1] = 0b01000100;
+    buffer[2] = 0b01000100;
+    buffer[3] = 0b01111000;
+    buffer[4] = 0b01000100;
+    buffer[5] = 0b01000100;
+    buffer[6] = 0b01111000;
+    buffer[7] = 0b00000000;
+
+    buffer[8]  = 0b01111000;
+    buffer[9]  = 0b01000100;
+    buffer[10] = 0b01000100;
+    buffer[11] = 0b01111000;
+    buffer[12] = 0b01000100;
+    buffer[13] = 0b01000100;
+    buffer[14] = 0b01111000;
+    buffer[15] = 0b00000000;
+
+    buffer[16] = 0b00000000;
+    buffer[17] = 0b00000000;
+    buffer[18] = 0b00000000;
+    buffer[19] = 0b00000000;
+    buffer[20] = 0b00000000;
+    buffer[21] = 0b00000000;
+    buffer[22] = 0b00000000;
+    buffer[23] = 0b00000000;
+
+    buffer[24] = 0b00000000;
+    buffer[25] = 0b00000000;
+    buffer[26] = 0b00000000;
+    buffer[27] = 0b00000000;
+    buffer[28] = 0b00000000;
+    buffer[29] = 0b00000000;
+    buffer[30] = 0b00000000;
+    buffer[31] = 0b00000000;
+}
+
+
+void Max7219::write() {
+    for ( uint8_t row = OP_DIGIT0; row <= OP_DIGIT7; row++ ) {
+        spiTransfer(row, 0);
+    }
+}
+
+
+void Max7219::spiTransfer(uint8_t opcode, uint8_t data) {
     while (SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_TXE) == RESET);
 
     GPIO_ResetBits(GPIOB, GPIO_Pin_5);
 
     int start = opcode - OP_DIGIT0;
 
-    for( int i = 0; i < size/8; i++ ) {
+    for( int i = 0; i < SIZE/8; i++ ) {
         SPI_I2S_SendData(SPI1, opcode);
         DelayUs(30);
         SPI_I2S_SendData(SPI1, opcode <= OP_DIGIT7 ? buffer[start] : data);
@@ -135,11 +211,16 @@ void spiTransfer(uint8_t opcode, uint8_t data) {
 }
 
 
-void write() {
-    for ( uint8_t row = OP_DIGIT0; row <= OP_DIGIT7; row++ ) {
-        spiTransfer(row, 255);
-    }
+void Max7219::drawPixel(int x, int y) {
+    setBit( buffer[ x ], y );
 }
+
+
+void Max7219::setBit(uint8_t &byte, int position) {
+    byte |= 1 << position;
+}
+
+
 
 
 /*
@@ -156,59 +237,14 @@ int main() {
     DelayInit();
 
 
-    spiTransfer(OP_DISPLAYTEST, 0);
-    spiTransfer(OP_SCANLIMIT, 7);
-    spiTransfer(OP_DECODEMODE, 0);
-    spiTransfer(OP_SHUTDOWN, 1);
-    spiTransfer(OP_INTENSITY, 0);
 
 
 
 
-    for( int i = 0; i < size; i++ ) {
-        buffer[i] = 0x00;
-    }
 
-
-    buffer[0] = 0b01111111;
-    buffer[1] = 0b10111111;
-    buffer[2] = 0b11011111;
-    buffer[3] = 0b11101111;
-    buffer[4] = 0b11110111;
-    buffer[5] = 0b11111011;
-    buffer[6] = 0b11111101;
-    buffer[7] = 0b11111110;
-
-    buffer[8]  = 0b11111111;
-    buffer[9]  = 0b11111111;
-    buffer[10] = 0b11111111;
-    buffer[11] = 0b11111111;
-    buffer[12] = 0b11111111;
-    buffer[13] = 0b11111111;
-    buffer[14] = 0b11111111;
-    buffer[15] = 0b11111111;
-
-    buffer[16] = 0b11111111;
-    buffer[17] = 0b11111111;
-    buffer[18] = 0b11111111;
-    buffer[19] = 0b11111111;
-    buffer[20] = 0b11111111;
-    buffer[21] = 0b11111111;
-    buffer[22] = 0b11111111;
-    buffer[23] = 0b11111111;
-
-    buffer[24] = 0b11111111;
-    buffer[25] = 0b11111111;
-    buffer[26] = 0b11111111;
-    buffer[27] = 0b11111111;
-    buffer[28] = 0b11111111;
-    buffer[29] = 0b11111111;
-    buffer[30] = 0b11111111;
-    buffer[31] = 0b11111111;
-
-
-
-    write();
+    Max7219 display = Max7219();
+    display.drawPixel(19, 7);
+    display.write();
 
 
 
