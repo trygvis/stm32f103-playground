@@ -100,66 +100,56 @@ void spiInit() {
 }
 
 
-void send_data( uint8_t address, uint8_t data ) {
+
+#define OP_NOOP         0
+#define OP_DIGIT0       1
+#define OP_DIGIT1       2
+#define OP_DIGIT2       3
+#define OP_DIGIT3       4
+#define OP_DIGIT4       5
+#define OP_DIGIT5       6
+#define OP_DIGIT6       7
+#define OP_DIGIT7       8
+#define OP_DECODEMODE   9
+#define OP_INTENSITY   10
+#define OP_SCANLIMIT   11
+#define OP_SHUTDOWN    12
+#define OP_DISPLAYTEST 15
+
+const int size = 32;
+uint8_t buffer[size];
+
+
+
+
+void spiTransfer(uint8_t opcode, uint8_t data) {
     while (SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_TXE) == RESET);
 
-    //DelayUs(30);
     GPIO_ResetBits(GPIOB, GPIO_Pin_5);
-    //DelayUs(30);
-    SPI_I2S_SendData(SPI1, address);
-    DelayUs(30);    // Remove and get wrong result
-    SPI_I2S_SendData(SPI1, data);
-    DelayUs(30);    // Remove and get wrong result
+    DelayUs(100);
+
+    int end = opcode - OP_DIGIT0;
+    int start = size + end;
+
+    do {
+        start -= 8;
+        DelayUs(30);
+        SPI_I2S_SendData(SPI1, opcode);
+        DelayUs(30);
+        SPI_I2S_SendData(SPI1, opcode <= OP_DIGIT7 ? buffer[start] : data);
+        DelayUs(30);
+    }
+    while ( start > end );
+
     GPIO_SetBits(GPIOB, GPIO_Pin_5);
-    //DelayUs(30);
+    DelayUs(100);
 }
 
 
-void max7219_self_test(void) {
-    send_data(REG_TEST, 0x01);
-    DelayMs(1000);
-    send_data(REG_TEST, 0x00);
-}
-
-
-void max7219_init() {
-    send_data(REG_TEST, 0x00);          // Turn off self test
-    send_data(REG_SCAN_LIMIT, 0x07);    // Enable all
-    send_data(REG_DECODE_MODE, 0x00);   // Don't decode BCD
-    send_data(REG_SHUTDOWN, 0x01);      // Turn on chip
-}
-
-
-void max7219_reset() {
-    // Shutdown
-    send_data(REG_SHUTDOWN, 0x00);
-
-    // Normal operation
-    send_data(REG_SHUTDOWN, 0x01);
-}
-
-
-void max7219_clear_all() {
-    send_data(1, 0b00000000);
-    send_data(2, 0b00000000);
-    send_data(3, 0b00000000);
-    send_data(4, 0b00000000);
-    send_data(5, 0b00000000);
-    send_data(6, 0b00000000);
-    send_data(7, 0b00000000);
-    send_data(8, 0b00000000);
-}
-
-
-void max7219_turn_all() {
-    send_data(1, 0b00011000);
-    send_data(2, 0b00011000);
-    send_data(3, 0b00011000);
-    send_data(4, 0b11111111);
-    send_data(5, 0b11111111);
-    send_data(6, 0b00011000);
-    send_data(7, 0b00011000);
-    send_data(8, 0b00011000);
+void write() {
+    for ( uint8_t row = OP_DIGIT7; row >= OP_DIGIT0; row-- ) {
+        spiTransfer(row, 0);
+    }
 }
 
 
@@ -176,21 +166,69 @@ int main() {
     spiInit();
     DelayInit();
 
-    max7219_init();
 
-    send_data( REG_INTENSITY, 0x00 );   // Intensity between 0x00 and 0xFF
+    spiTransfer(OP_DISPLAYTEST, 0);
+    spiTransfer(OP_SCANLIMIT, 7);
+    spiTransfer(OP_DECODEMODE, 0);
+    spiTransfer(OP_SHUTDOWN, 1);
+    spiTransfer(OP_INTENSITY, 0);
+
+
+
+
+    for( int i = 0; i < size; i++ ) {
+        buffer[i] = 0x00;
+    }
+
+
+    buffer[0] = 0b11111111;
+    buffer[1] = 0b00000000;
+    buffer[2] = 0b00000000;
+    buffer[3] = 0b00000000;
+    buffer[4] = 0b00000000;
+    buffer[5] = 0b00000000;
+    buffer[6] = 0b00000000;
+    buffer[7] = 0b00000000;
+
+    buffer[8]  = 0b11111111;
+    buffer[9]  = 0b00000000;
+    buffer[10] = 0b00000000;
+    buffer[11] = 0b00000000;
+    buffer[12] = 0b00000000;
+    buffer[13] = 0b00000000;
+    buffer[14] = 0b00000000;
+    buffer[15] = 0b00000000;
+
+    buffer[16] = 0b11111111;
+    buffer[17] = 0b00000000;
+    buffer[18] = 0b00000000;
+    buffer[19] = 0b00000000;
+    buffer[20] = 0b00000000;
+    buffer[21] = 0b00000000;
+    buffer[22] = 0b00000000;
+    buffer[23] = 0b00000000;
+
+    buffer[24] = 0b11111111;
+    buffer[25] = 0b00000000;
+    buffer[26] = 0b00000000;
+    buffer[27] = 0b00000000;
+    buffer[28] = 0b00000000;
+    buffer[29] = 0b00000000;
+    buffer[30] = 0b00000000;
+    buffer[31] = 0b00000000;
+
+
+
+    write();
+
+
+
+
 
 
 
     while (run) {
-        dbg_printf("TURN ON\n");
-
-        max7219_turn_all();
-
-        DelayMs(2000);
-
-        max7219_clear_all();
-
+        dbg_printf("LOOP\n");
         DelayMs(2000);
     }
 
