@@ -126,6 +126,7 @@ public:
     void spiTransfer(uint8_t opcode, uint8_t data);
     void write();
     void drawPixel(int x, int y);
+    void drawCol(int row, uint8_t value);
     void setPosition(uint8_t display, uint8_t x, uint8_t y);
     void setRotation(uint8_t display, uint8_t rotation);
 
@@ -136,6 +137,7 @@ private:
     int hDisplays = 4;
 
     void setBit(uint8_t &byte, int position);
+    bool getBit(uint8_t byte, int position);
 };
 
 
@@ -245,6 +247,15 @@ void Max7219::drawPixel(int x, int y) {
 }
 
 
+void Max7219::drawCol( int col, uint8_t value) {
+    for( int i = 0; i < 8; i++ ) {
+        if( getBit( value, i ) ) {
+            drawPixel( col, i );
+        }
+    }
+}
+
+
 /*
  * Define how the displays are ordered. The first display (0)
  * is the one closest to the MCU.
@@ -272,6 +283,11 @@ void Max7219::setBit(uint8_t &byte, int position) {
 }
 
 
+bool Max7219::getBit(uint8_t byte, int position) {
+    return (byte >> position) & 0x1;
+}
+
+
 
 
 /*
@@ -294,20 +310,27 @@ int main() {
     display.setPosition(1, 1, 0);
     display.setPosition(2, 2, 0);
     display.setPosition(3, 3, 0);
+    display.setRotation( 0, 1 );
+    display.setRotation( 1, 1 );
+    display.setRotation( 2, 1 );
+    display.setRotation( 3, 1 );
 
-    display.drawPixel(1, 1);
-    display.drawPixel(9, 1);
-    display.drawPixel(17, 1);
-    display.drawPixel(25, 1);
+    display.drawPixel(1, 0);
+    display.drawPixel(9, 0);
+    display.drawPixel(17, 0);
+    display.drawPixel(25, 0);
+
 
     display.write();
 
 
-
+    int i = 0;
 
     while (run) {
-        dbg_printf("LOOP\n");
-        DelayMs(2000);
+        display.drawCol( i++, 0b11110001 );
+        display.write();
+
+        DelayMs(200);
     }
 
     return 0;
