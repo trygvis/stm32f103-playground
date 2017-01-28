@@ -126,9 +126,12 @@ public:
     void spiTransfer(uint8_t opcode, uint8_t data);
     void write();
     void drawPixel(int x, int y);
+    void setPosition(uint8_t display, uint8_t x, uint8_t y);
 
 private:
     uint8_t buffer[SIZE];
+    uint8_t matrixPosition[4];
+    int hDisplays = 4;
 
     void setBit(uint8_t &byte, int position);
 };
@@ -145,6 +148,7 @@ Max7219::Max7219() {
         buffer[i] = 0x00;
     }
 
+    /*
     buffer[0] = 0b01111000;
     buffer[1] = 0b01000100;
     buffer[2] = 0b01000100;
@@ -180,11 +184,12 @@ Max7219::Max7219() {
     buffer[29] = 0b00000000;
     buffer[30] = 0b00000000;
     buffer[31] = 0b00000000;
+     */
 }
 
 
 void Max7219::write() {
-    for ( uint8_t row = OP_DIGIT0; row <= OP_DIGIT7; row++ ) {
+    for ( uint8_t row = OP_DIGIT7; row >= OP_DIGIT0; row-- ) {
         spiTransfer(row, 0);
     }
 }
@@ -195,24 +200,57 @@ void Max7219::spiTransfer(uint8_t opcode, uint8_t data) {
 
     GPIO_ResetBits(GPIOB, GPIO_Pin_5);
 
-    int start = opcode - OP_DIGIT0;
+    uint8_t end = opcode - OP_DIGIT0;
+    uint8_t start = SIZE + end;
+    do {
+        start -= 8;
 
-    for( int i = 0; i < SIZE/8; i++ ) {
         SPI_I2S_SendData(SPI1, opcode);
         DelayUs(30);
         SPI_I2S_SendData(SPI1, opcode <= OP_DIGIT7 ? buffer[start] : data);
         DelayUs(30);
-
-        start += 8;
     }
+    while ( start > end );
 
     GPIO_SetBits(GPIOB, GPIO_Pin_5);
 
 }
 
 
+// Rotation virker, men ikke position
 void Max7219::drawPixel(int x, int y) {
+    uint8_t matrixRotation[4] {1,1,1,1};
+    uint8_t tmp;
+
+    uint8_t display = matrixPosition[(x >> 3) + hDisplays * (y >> 3)];
+    x &= 0b111;
+    y &= 0b111;
+
+    uint8_t r = matrixRotation[display];
+    if ( r >= 2 ) {										   // 180 or 270 degrees
+        x = 7 - x;
+    }
+    if ( r == 1 || r == 2 ) {				     // 90 or 180 degrees
+        y = 7 - y;
+    }
+    if ( r & 1 ) {     								   // 90 or 270 degrees
+        tmp = x; x = y; y = tmp;
+    }
+
+    uint8_t d = display / hDisplays;
+    x += (display - d * hDisplays) << 3; // x += (display % hDisplays) * 8
+    y += d << 3;
+
+
+    //dbg_printf("x: %d, y: %d\n", x, y);
+
+
     setBit( buffer[ x ], y );
+}
+
+
+void Max7219::setPosition(uint8_t display, uint8_t x, uint8_t y) {
+    matrixPosition[x + hDisplays * y] = display;
 }
 
 
@@ -243,18 +281,34 @@ int main() {
 
 
     Max7219 display = Max7219();
-    display.drawPixel(19, 7);
-    display.write();
+    display.setPosition(0, 0, 0);
+    display.setPosition(1, 1, 0);
+    display.setPosition(2, 2, 0);
+    display.setPosition(3, 3, 0);
+
+    //display.drawPixel(1, 1);
+    //display.write();
 
 
 
 
 
-
+    int x = 0;
 
     while (run) {
-        dbg_printf("LOOP\n");
-        DelayMs(2000);
+        //dbg_printf("LOOP\n");
+        display.drawPixel(x, 0);
+        display.drawPixel(x, 1);
+        display.drawPixel(x, 2);
+        display.drawPixel(x, 3);
+        display.drawPixel(x, 4);
+        display.drawPixel(x, 5);
+        display.drawPixel(x, 6);
+        display.drawPixel(x, 7);
+        display.write();
+        DelayMs(200);
+
+        x++;
     }
 
     return 0;
