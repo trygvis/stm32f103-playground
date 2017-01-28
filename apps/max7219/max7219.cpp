@@ -220,31 +220,35 @@ void Max7219::spiTransfer(uint8_t opcode, uint8_t data) {
 
 
 void Max7219::drawPixel(int x, int y) {
-    uint8_t tmp;
+    int tmp;
 
     uint8_t display = matrixPosition[(x >> 3) + hDisplays * (y >> 3)];
     x &= 0b111;
     y &= 0b111;
 
     uint8_t r = matrixRotation[display];
-    if ( r >= 2 ) {										   // 180 or 270 degrees
+    if ( r >= 2 ) {                 // 180 or 270 degrees
         x = 7 - x;
     }
-    if ( r == 1 || r == 2 ) {				     // 90 or 180 degrees
+    if ( r == 1 || r == 2 ) {       // 90 or 180 degrees
         y = 7 - y;
     }
-    if ( r & 1 ) {     								   // 90 or 270 degrees
+    if ( r & 1 ) {                  // 90 or 270 degrees
         tmp = x; x = y; y = tmp;
     }
 
-    uint8_t d = display / hDisplays;
-    x += (display - d * hDisplays) << 3; // x += (display % hDisplays) * 8
+    int d = display / hDisplays;
+    x += (display - d * hDisplays) << 3;
     y += d << 3;
 
     setBit( buffer[ x ], y );
 }
 
 
+/*
+ * Define how the displays are ordered. The first display (0)
+ * is the one closest to the MCU.
+ */
 void Max7219::setPosition(uint8_t display, uint8_t x, uint8_t y) {
     matrixPosition[x + hDisplays * y] = display;
 }
@@ -252,7 +256,7 @@ void Max7219::setPosition(uint8_t display, uint8_t x, uint8_t y) {
 
 /*
  * Define if and how the displays are rotated. The first display
- * (0) is the one closest to the Arduino. rotation can be:
+ * (0) is the one closest to the MCU. rotation can be:
  *   0: no rotation
  *   1: 90 degrees clockwise
  *   2: 180 degrees
