@@ -127,10 +127,12 @@ public:
     void write();
     void drawPixel(int x, int y);
     void setPosition(uint8_t display, uint8_t x, uint8_t y);
+    void setRotation(uint8_t display, uint8_t rotation);
 
 private:
     uint8_t buffer[SIZE];
     uint8_t matrixPosition[4];
+    uint8_t matrixRotation[4];
     int hDisplays = 4;
 
     void setBit(uint8_t &byte, int position);
@@ -217,9 +219,7 @@ void Max7219::spiTransfer(uint8_t opcode, uint8_t data) {
 }
 
 
-// Rotation virker, men ikke position
 void Max7219::drawPixel(int x, int y) {
-    uint8_t matrixRotation[4] {1,1,1,1};
     uint8_t tmp;
 
     uint8_t display = matrixPosition[(x >> 3) + hDisplays * (y >> 3)];
@@ -241,16 +241,25 @@ void Max7219::drawPixel(int x, int y) {
     x += (display - d * hDisplays) << 3; // x += (display % hDisplays) * 8
     y += d << 3;
 
-
-    //dbg_printf("x: %d, y: %d\n", x, y);
-
-
     setBit( buffer[ x ], y );
 }
 
 
 void Max7219::setPosition(uint8_t display, uint8_t x, uint8_t y) {
     matrixPosition[x + hDisplays * y] = display;
+}
+
+
+/*
+ * Define if and how the displays are rotated. The first display
+ * (0) is the one closest to the Arduino. rotation can be:
+ *   0: no rotation
+ *   1: 90 degrees clockwise
+ *   2: 180 degrees
+ *   3: 90 degrees counter clockwise
+ */
+void Max7219::setRotation(uint8_t display, uint8_t rotation) {
+    matrixRotation[display] = rotation;
 }
 
 
@@ -276,39 +285,25 @@ int main() {
 
 
 
-
-
-
-
     Max7219 display = Max7219();
     display.setPosition(0, 0, 0);
     display.setPosition(1, 1, 0);
     display.setPosition(2, 2, 0);
     display.setPosition(3, 3, 0);
 
-    //display.drawPixel(1, 1);
-    //display.write();
+    display.drawPixel(1, 1);
+    display.drawPixel(9, 1);
+    display.drawPixel(17, 1);
+    display.drawPixel(25, 1);
+
+    display.write();
 
 
 
-
-
-    int x = 0;
 
     while (run) {
-        //dbg_printf("LOOP\n");
-        display.drawPixel(x, 0);
-        display.drawPixel(x, 1);
-        display.drawPixel(x, 2);
-        display.drawPixel(x, 3);
-        display.drawPixel(x, 4);
-        display.drawPixel(x, 5);
-        display.drawPixel(x, 6);
-        display.drawPixel(x, 7);
-        display.write();
-        DelayMs(200);
-
-        x++;
+        dbg_printf("LOOP\n");
+        DelayMs(2000);
     }
 
     return 0;
