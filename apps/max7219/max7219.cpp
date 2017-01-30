@@ -896,6 +896,7 @@ public:
     void drawPixel(int x, int y);
     void drawCol(int row, uint8_t value);
     void drawChar( int display, char c );
+    void drawString( char* str );
     void setPosition(uint8_t display, uint8_t x, uint8_t y);
     void setRotation(uint8_t display, uint8_t rotation);
 
@@ -995,7 +996,13 @@ void Max7219::drawChar( int display, char c ) {
         uint8_t l = alphabet[ ((ascii - 0x20) * 7) +i];
         drawCol( i+offset, l >> 1 );
     }
+}
 
+
+void Max7219::drawString( char* str ) {
+    for( int i = 0; i < 4; i++ ) {
+        drawChar( i, str[i] );
+    }
 }
 
 
@@ -1057,11 +1064,7 @@ int main() {
     display.setRotation( 2, 2 );
     display.setRotation( 3, 2 );
 
-
-    display.drawChar(0, 'M');
-    display.drawChar(1, 'a');
-    display.drawChar(2, 't');
-    display.drawChar(3, 's');
+    display.drawString("TEST");
 
 
     display.write();
