@@ -120,13 +120,13 @@ uint8_t alphabet[] = {
     0b00000000,
     0b00000000,
 
-    0b01010000,	//#
-    0b01010000,
-    0b11111000,
-    0b01010000,
-    0b11111000,
-    0b01010000,
-    0b01010000,
+    0b11111111,	//#
+    0b11111111,
+    0b11111111,
+    0b11111111,
+    0b11111111,
+    0b11111111,
+    0b11111111,
 
     0b00100000,	//$
     0b01111000,
@@ -893,10 +893,12 @@ public:
     Max7219();
     void spiTransfer(uint8_t opcode, uint8_t data);
     void write();
-    void drawPixel(int x, int y);
-    void drawCol(int row, uint8_t value);
+    void drawPixel(int x, int y, bool set);
+    void drawCol(int row, uint8_t value, bool set);
     void drawChar( int display, char c );
     void drawString( char* str );
+    void fill( int display );
+    void clear( int display );
     void setPosition(uint8_t display, uint8_t x, uint8_t y);
     void setRotation(uint8_t display, uint8_t rotation);
 
@@ -907,6 +909,7 @@ private:
     int hDisplays = 4;
 
     void setBit(uint8_t &byte, int position);
+    void clearBit(uint8_t &byte, int position);
     bool getBit(uint8_t byte, int position);
 };
 
@@ -953,7 +956,7 @@ void Max7219::spiTransfer(uint8_t opcode, uint8_t data) {
 }
 
 
-void Max7219::drawPixel(int x, int y) {
+void Max7219::drawPixel(int x, int y, bool set) {
     int tmp;
 
     uint8_t display = matrixPosition[(x >> 3) + hDisplays * (y >> 3)];
@@ -975,26 +978,42 @@ void Max7219::drawPixel(int x, int y) {
     x += (display - d * hDisplays) << 3;
     y += d << 3;
 
-    setBit( buffer[ x ], y );
+    if( set ) {
+        setBit( buffer[ x ], y );
+    } else {
+        clearBit( buffer[ x ], y );
+    }
+
 }
 
 
-void Max7219::drawCol( int col, uint8_t value) {
+void Max7219::drawCol( int col, uint8_t value, bool set) {
     for( int i = 0; i < 8; i++ ) {
         if( getBit( value, i ) ) {
-            drawPixel( col, i );
+            drawPixel( col, i, set );
         }
     }
 }
 
 
 void Max7219::drawChar( int display, char c ) {
+    // Handle # and space separate since alphabet is 7x7 and won't fill display
+    if( c == '#' ) {
+        fill( display );
+        return;
+    }
+
+    if( c == ' ' ) {
+        clear( display );
+        return;
+    }
+
     int ascii = (int) c;
     int offset = display * 8;
 
     for( int i = 0; i < 7; i++ ) {
         uint8_t l = alphabet[ ((ascii - 0x20) * 7) +i];
-        drawCol( i+offset, l >> 1 );
+        drawCol( i+offset, l >> 1, true );
     }
 }
 
@@ -1002,6 +1021,24 @@ void Max7219::drawChar( int display, char c ) {
 void Max7219::drawString( char* str ) {
     for( int i = 0; i < 4; i++ ) {
         drawChar( i, str[i] );
+    }
+}
+
+
+void Max7219::fill( int display ) {
+    int offset = display * 8;
+
+    for( int i = 0; i < 8; i++ ) {
+        drawCol( i+offset, 0xFF, true );
+    }
+}
+
+
+void Max7219::clear( int display ) {
+    int offset = display * 8;
+
+    for( int i = 0; i < 8; i++ ) {
+        drawCol( i+offset, 0xFF, false );
     }
 }
 
@@ -1033,10 +1070,14 @@ void Max7219::setBit(uint8_t &byte, int position) {
 }
 
 
+void Max7219::clearBit(uint8_t &byte, int position) {
+    byte &= ~(1 << position);
+}
+
+
 bool Max7219::getBit(uint8_t byte, int position) {
     return (byte >> position) & 0x1;
 }
-
 
 
 
@@ -1064,14 +1105,12 @@ int main() {
     display.setRotation( 2, 2 );
     display.setRotation( 3, 2 );
 
-    display.drawString("TEST");
-
-
+    display.drawString("Test");
     display.write();
 
 
     while (run) {
-        DelayMs(200);
+        DelayMs(1000);
     }
 
     return 0;
