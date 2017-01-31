@@ -57,7 +57,7 @@ void gpioInit() {
 
     // Configure NSS pin
     GPIO_StructInit(&gpioInit);
-    gpioInit.GPIO_Pin = GPIO_Pin_5;
+    gpioInit.GPIO_Pin = GPIO_Pin_5 | GPIO_Pin_6;
     gpioInit.GPIO_Mode = GPIO_Mode_Out_PP;
     gpioInit.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(GPIOB, &gpioInit);
@@ -890,7 +890,7 @@ uint8_t alphabet[] = {
 class Max7219 {
 
 public:
-    Max7219();
+    Max7219( GPIO_TypeDef *csReg, uint16_t csPin );
     void spiTransfer(uint8_t opcode, uint8_t data);
     void write();
     void drawPixel(int x, int y, bool set);
@@ -903,6 +903,8 @@ public:
     void setRotation(uint8_t display, uint8_t rotation);
 
 private:
+    GPIO_TypeDef *csReg;
+    uint16_t csPin;
     uint8_t buffer[SIZE];
     uint8_t matrixPosition[4];
     uint8_t matrixRotation[4];
@@ -914,12 +916,15 @@ private:
 };
 
 
-Max7219::Max7219() {
+Max7219::Max7219( GPIO_TypeDef *csReg, uint16_t csPin ) {
+    this->csReg = csReg;
+    this->csPin = csPin;
+
     spiTransfer(OP_DISPLAYTEST, 0);
     spiTransfer(OP_SCANLIMIT, 7);
     spiTransfer(OP_DECODEMODE, 0);
     spiTransfer(OP_SHUTDOWN, 1);
-    spiTransfer(OP_INTENSITY, 0);
+    spiTransfer(OP_INTENSITY, 2);
 
     for( int i = 0; i < SIZE; i++ ) {
         buffer[i] = 0x00;
@@ -937,10 +942,10 @@ void Max7219::write() {
 void Max7219::spiTransfer(uint8_t opcode, uint8_t data) {
     while (SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_TXE) == RESET);
 
-    GPIO_ResetBits(GPIOB, GPIO_Pin_5);
+    GPIO_ResetBits(csReg, csPin);
 
-    uint8_t end = opcode - OP_DIGIT0;
-    uint8_t start = SIZE + end;
+    int end = opcode - OP_DIGIT0;
+    int start = SIZE + end;
     do {
         start -= 8;
 
@@ -951,7 +956,7 @@ void Max7219::spiTransfer(uint8_t opcode, uint8_t data) {
     }
     while ( start > end );
 
-    GPIO_SetBits(GPIOB, GPIO_Pin_5);
+    GPIO_SetBits(csReg, csPin);
 
 }
 
@@ -983,7 +988,6 @@ void Max7219::drawPixel(int x, int y, bool set) {
     } else {
         clearBit( buffer[ x ], y );
     }
-
 }
 
 
@@ -1095,18 +1099,32 @@ int main() {
     DelayInit();
 
 
-    Max7219 display = Max7219();
-    display.setPosition(0, 0, 0);
-    display.setPosition(1, 1, 0);
-    display.setPosition(2, 2, 0);
-    display.setPosition(3, 3, 0);
-    display.setRotation( 0, 2 );
-    display.setRotation( 1, 2 );
-    display.setRotation( 2, 2 );
-    display.setRotation( 3, 2 );
+    Max7219 d1 = Max7219( GPIOB, GPIO_Pin_5 );
+    d1.setPosition(0, 0, 0);
+    d1.setPosition(1, 1, 0);
+    d1.setPosition(2, 2, 0);
+    d1.setPosition(3, 3, 0);
+    d1.setRotation( 0, 2 );
+    d1.setRotation( 1, 2 );
+    d1.setRotation( 2, 2 );
+    d1.setRotation( 3, 2 );
+    d1.drawString("Hei-");
+    d1.write();
 
-    display.drawString("Test");
-    display.write();
+
+    Max7219 d2 = Max7219( GPIOB, GPIO_Pin_6 );
+    d2.setPosition(0, 0, 0);
+    d2.setPosition(1, 1, 0);
+    d2.setPosition(2, 2, 0);
+    d2.setPosition(3, 3, 0);
+    d2.setRotation( 0, 2 );
+    d2.setRotation( 1, 2 );
+    d2.setRotation( 2, 2 );
+    d2.setRotation( 3, 2 );
+    d2.drawString("sann");
+    d2.write();
+
+
 
 
     while (run) {
