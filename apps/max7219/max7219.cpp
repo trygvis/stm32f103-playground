@@ -1133,3 +1133,8 @@ int main() {
 
     return 0;
 }
+
+void SysTick_Handler()
+{
+    DelayOnTick();
+}

@@ -15,6 +15,7 @@ extern "C" {
 
 #include "stm32f10x.h"
 
+void DelayOnTick();
 void DelayInit(void);
 void DelayUs(uint32_t us);
 void DelayMs(uint32_t ms);
