@@ -5,7 +5,7 @@ define target hookpost-extended-remote
 end
 
 define run_max7219
-    make -C build max7219elf
+    make -C build max7219.elf
 
     monitor reset halt
 
