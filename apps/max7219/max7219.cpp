@@ -7,7 +7,7 @@
 #include "tinyprintf.h"
 #include "playground.h"
 #include "delay.h"
-#include "alphabeth.h"
+#include "alphabet.h"
 
 
 /*
